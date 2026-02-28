@@ -1,0 +1,19 @@
+# Development Caddyfile
+# For production, replace localhost with your domain
+
+localhost {
+    # Backend API (must be before frontend catch-all)
+    handle /api/* {
+        reverse_proxy backend:8000
+    }
+
+    # WebSocket (for future order status updates)
+    handle /ws/* {
+        reverse_proxy backend:8000
+    }
+
+    # Frontend SPA (catch-all — last)
+    handle {
+        reverse_proxy frontend:5173
+    }
+}

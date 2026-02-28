@@ -1,0 +1,45 @@
+services:
+  backend:
+    build: ./backend
+    container_name: hookahbook-backend
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      - db-data:/app/data
+    expose:
+      - "8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import httpx; httpx.get('http://localhost:8000/api/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  frontend:
+    build: ./frontend
+    container_name: hookahbook-frontend
+    volumes:
+      - frontend-dist:/output
+
+  caddy:
+    image: caddy:2-alpine
+    container_name: hookahbook-caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy-data:/data
+      - caddy-config:/config
+      - frontend-dist:/srv/frontend:ro
+    depends_on:
+      backend:
+        condition: service_healthy
+      frontend:
+        condition: service_completed_successfully
+
+volumes:
+  db-data:
+  caddy-data:
+  caddy-config:
+  frontend-dist:

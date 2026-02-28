@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm create vite@latest frontend -- --template react-ts)",
+      "Bash(npm install)",
+      "Bash(npm install react-router-dom axios @tanstack/react-query react-konva konva)",
+      "Bash(npx tsc --noEmit)",
+      "mcp__Claude_Preview__preview_start",
+      "Bash(npm --version)",
+      "Bash(node --version)",
+      "Bash(where npm)",
+      "Bash(python -c \":*)",
+      "Bash(where python)",
+      "Bash(py --version)",
+      "Bash(py -3 --version)",
+      "Bash(\"C:/Users/peppa/AppData/Local/Programs/Python/Python312/python.exe\" -c \":*)",
+      "Bash(py -3 -c \":*)",
+      "Bash(py -3 -m venv .venv)",
+      "Bash(.venv/Scripts/pip.exe install -r requirements.txt)",
+      "Bash(curl -s http://localhost:8000/api/health)"
+    ]
+  }
+}
