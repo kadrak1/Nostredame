@@ -11,7 +11,7 @@ from slowapi.util import get_remote_address
 
 from app.config import settings
 from app.database import engine
-from app.routers import auth, health, tables, venue
+from app.routers import auth, health, tables, tobaccos, venue
 
 
 # --- Rate limiting ---
@@ -74,3 +74,4 @@ app.include_router(health.router, prefix="/api")
 app.include_router(auth.router, prefix="/api")
 app.include_router(venue.router, prefix="/api")
 app.include_router(tables.router, prefix="/api")
+app.include_router(tobaccos.router, prefix="/api")
