@@ -385,4 +385,218 @@ textarea:focus {
     padding: 1rem;
     padding-top: 4rem;
   }
+
+  .fp-workspace {
+    flex-direction: column !important;
+  }
+
+  .fp-toolbar {
+    flex-direction: row !important;
+    overflow-x: auto;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+  }
+
+  .fp-canvas-wrap {
+    min-width: 0;
+  }
+}
+
+/* ================================================================
+   Floor Plan Constructor
+   ================================================================ */
+
+.floor-plan-page {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 4rem);
+}
+
+.fp-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.fp-header h1 {
+  margin-bottom: 0 !important;
+}
+
+.fp-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.fp-btn-secondary {
+  background-color: transparent;
+  border: 1px solid #2a3a5c;
+  color: var(--text-muted);
+}
+
+.fp-btn-secondary:hover:not(:disabled) {
+  border-color: var(--text-primary);
+  color: var(--text-primary);
+}
+
+.fp-btn-secondary:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.fp-btn-danger {
+  width: 100%;
+  padding: 8px !important;
+  background-color: transparent !important;
+  border: 1px solid var(--danger) !important;
+  color: var(--danger) !important;
+  font-size: 0.85rem !important;
+}
+
+.fp-btn-danger:hover {
+  background-color: rgba(231, 76, 60, 0.15) !important;
+}
+
+.fp-save-ok {
+  color: var(--success);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.fp-save-err {
+  color: var(--danger);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.fp-workspace {
+  display: flex;
+  gap: 1rem;
+  flex: 1;
+  min-height: 0;
+}
+
+/* --- Toolbar --- */
+.fp-toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: 200px;
+  max-width: 200px;
+}
+
+.fp-toolbar-section {
+  background-color: var(--bg-card);
+  border-radius: var(--radius);
+  padding: 0.75rem;
+}
+
+.fp-toolbar-section h3 {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.5rem;
+}
+
+.fp-tool-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.5rem 0.65rem;
+  margin-bottom: 0.25rem;
+  background-color: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background-color 0.15s, color 0.15s;
+}
+
+.fp-tool-btn:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+  color: var(--text-primary);
+}
+
+.fp-tool-btn.active {
+  background-color: rgba(233, 69, 96, 0.15);
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.fp-tool-icon {
+  font-size: 1rem;
+  width: 1.25rem;
+  text-align: center;
+}
+
+/* --- Properties panel --- */
+.fp-properties label {
+  margin-bottom: 0.6rem;
+  font-size: 0.8rem;
+}
+
+.fp-properties input,
+.fp-properties select {
+  padding: 6px 8px;
+  font-size: 0.85rem;
+}
+
+.fp-prop-info {
+  display: flex;
+  gap: 0.75rem;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-bottom: 0.5rem;
+}
+
+/* --- Walls list --- */
+.fp-wall-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.25rem 0;
+  font-size: 0.8rem;
+}
+
+.fp-wall-del {
+  background: none;
+  border: none;
+  color: var(--danger);
+  font-size: 1.1rem;
+  cursor: pointer;
+  padding: 0 4px;
+}
+
+.fp-wall-del:hover {
+  color: #ff6b6b;
+}
+
+/* --- Canvas area --- */
+.fp-canvas-wrap {
+  flex: 1;
+  min-width: 0;
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--radius);
+  border: 1px solid #1a2a4a;
+}
+
+.fp-canvas-hint {
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: rgba(15, 25, 35, 0.9);
+  color: var(--accent);
+  padding: 6px 16px;
+  border-radius: var(--radius);
+  font-size: 0.8rem;
+  pointer-events: none;
 }
