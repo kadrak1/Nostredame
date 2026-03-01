@@ -5,7 +5,7 @@ After MAX_ATTEMPTS failures within the window, blocks for BLOCK_SECONDS.
 """
 
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 MAX_ATTEMPTS = 5
 BLOCK_SECONDS = 15 * 60  # 15 minutes

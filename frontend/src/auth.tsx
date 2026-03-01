@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import {
   createContext,
   useCallback,
@@ -23,7 +24,7 @@ const AuthContext = createContext<AuthState | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const logoutRef = useRef<() => Promise<void>>();
+  const logoutRef = useRef<(() => Promise<void>) | undefined>(undefined);
 
   const logout = useCallback(async () => {
     try {
@@ -35,9 +36,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   // Keep ref in sync for use in interceptor (avoids stale closure)
-  logoutRef.current = logout;
+  useEffect(() => {
+    logoutRef.current = logout;
+  }, [logout]);
 
-  // On mount: check session + set up 401 interceptor with auto-refresh
+  // On mount: check session + set up 401 interceptor with auto-refresh.
+  // Concurrent 401s are queued — only one refresh request is made.
   useEffect(() => {
     api
       .get('/auth/me')
@@ -45,8 +49,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .catch(() => setIsAuthenticated(false))
       .finally(() => setIsLoading(false));
 
-    // Interceptor: on 401, try to refresh once; if that also fails, auto-logout.
-    // Concurrent 401s are queued — only one refresh request is made.
     let isRefreshing = false;
     let refreshQueue: Array<(ok: boolean) => void> = [];
 
