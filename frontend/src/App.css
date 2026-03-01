@@ -851,3 +851,450 @@ textarea:focus {
     padding: 0.4rem 0.5rem;
   }
 }
+
+/* ================================================================
+   Guest Booking Page
+   ================================================================ */
+
+.bk-page {
+  min-height: 100vh;
+  padding: 2rem 1rem 4rem;
+  background-color: var(--bg-primary);
+}
+
+.bk-container {
+  max-width: 760px;
+  margin: 0 auto;
+}
+
+.bk-header {
+  margin-bottom: 2rem;
+}
+
+.bk-back-link {
+  display: inline-block;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  margin-bottom: 0.75rem;
+  text-decoration: none;
+  transition: color 0.15s;
+}
+
+.bk-back-link:hover {
+  color: var(--text-primary);
+}
+
+.bk-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+/* --- Step indicator --- */
+.bk-steps {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 2rem;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.bk-step {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.bk-step-circle {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  font-weight: 700;
+  border: 2px solid #2a3a5c;
+  background-color: var(--bg-card);
+  color: var(--text-muted);
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+
+.bk-step.active .bk-step-circle {
+  border-color: var(--accent);
+  background-color: var(--accent);
+  color: white;
+}
+
+.bk-step.done .bk-step-circle {
+  border-color: var(--success);
+  background-color: var(--success);
+  color: white;
+}
+
+.bk-step-label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-left: 0.5rem;
+  white-space: nowrap;
+}
+
+.bk-step.active .bk-step-label {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.bk-step.done .bk-step-label {
+  color: var(--success);
+}
+
+.bk-step-line {
+  width: 40px;
+  height: 2px;
+  background-color: #2a3a5c;
+  margin: 0 0.5rem;
+  flex-shrink: 0;
+}
+
+/* --- Card (form container) --- */
+.bk-card {
+  background-color: var(--bg-card);
+  border-radius: var(--radius);
+  padding: 1.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.bk-card-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+}
+
+/* --- Row layout for date/time pair --- */
+.bk-row {
+  display: flex;
+  gap: 1rem;
+}
+
+.bk-next-btn {
+  width: 100%;
+  margin-top: 0.5rem;
+}
+
+/* --- Table legend --- */
+.bk-table-legend {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  flex-wrap: wrap;
+}
+
+.bk-legend-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* --- Floor plan canvas --- */
+.bk-canvas-wrap {
+  width: 100%;
+  overflow: hidden;
+  border-radius: var(--radius);
+  border: 1px solid #1a2a4a;
+  margin-bottom: 1rem;
+  line-height: 0;
+}
+
+/* --- Selected table info badge --- */
+.bk-selected-info {
+  background-color: rgba(233, 69, 96, 0.12);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius);
+  padding: 0.6rem 1rem;
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+  color: var(--text-primary);
+}
+
+/* --- Navigation row --- */
+.bk-nav {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: space-between;
+  margin-top: 0.5rem;
+}
+
+.bk-nav .btn {
+  flex: 1;
+}
+
+/* --- Optional field label suffix --- */
+.bk-optional {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  font-weight: 400;
+}
+
+/* --- Success screen --- */
+.bk-success {
+  text-align: center;
+}
+
+.bk-success-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background-color: rgba(46, 204, 113, 0.15);
+  border: 2px solid var(--success);
+  color: var(--success);
+  font-size: 1.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1.25rem;
+}
+
+.bk-success-sub {
+  color: var(--text-muted);
+  margin-bottom: 1.5rem;
+}
+
+.bk-summary {
+  background-color: var(--bg-input);
+  border-radius: var(--radius);
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.25rem;
+  text-align: left;
+}
+
+.bk-summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.4rem 0;
+  font-size: 0.9rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.bk-summary-row:last-child {
+  border-bottom: none;
+}
+
+.bk-summary-row span {
+  color: var(--text-muted);
+}
+
+.bk-status-pending {
+  color: #f39c12;
+}
+
+.bk-save-hint {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-bottom: 1.5rem;
+}
+
+/* --- Mobile --- */
+@media (max-width: 600px) {
+  .bk-page {
+    padding: 1.25rem 0.75rem 3rem;
+  }
+
+  .bk-card {
+    padding: 1.25rem;
+  }
+
+  .bk-row {
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .bk-step-label {
+    display: none;
+  }
+
+  .bk-step-line {
+    width: 24px;
+  }
+
+  .bk-nav {
+    flex-direction: column-reverse;
+  }
+}
+
+/* ==========================================================================
+   Admin Bookings Dashboard  (.ab-*)
+   ========================================================================== */
+
+.ab-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.ab-header h1 {
+  margin: 0;
+}
+
+.ab-header-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+/* Stats cards */
+.ab-stats {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.ab-stat {
+  flex: 1;
+  min-width: 120px;
+  border-radius: var(--radius);
+  padding: 1rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.ab-stat-pending  { background: rgba(255, 165, 0, 0.10); }
+.ab-stat-confirmed { background: rgba(46, 204, 113, 0.10); }
+.ab-stat-total    { background: rgba(136, 146, 160, 0.10); }
+
+.ab-stat-num {
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.ab-stat-pending  .ab-stat-num  { color: #FFA500; }
+.ab-stat-confirmed .ab-stat-num { color: #2ECC71; }
+.ab-stat-total    .ab-stat-num  { color: #8892A0; }
+
+.ab-stat-label {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  margin-top: 0.25rem;
+}
+
+/* Date filter clear button */
+.ab-filter-date {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.5rem;
+}
+
+.ab-clear-btn {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 0 0.25rem;
+  line-height: 1;
+  margin-bottom: 0.1rem;
+  transition: color 0.15s;
+}
+
+.ab-clear-btn:hover { color: #E94560; }
+
+/* Table customizations */
+.ab-table th:last-child,
+.ab-table td:last-child {
+  white-space: nowrap;
+}
+
+.ab-id        { color: var(--text-secondary); font-size: 0.85rem; }
+.ab-phone     { font-family: monospace; font-size: 0.85rem; color: var(--text-secondary); }
+.ab-table-num { font-weight: 600; }
+.ab-time      { white-space: nowrap; font-size: 0.9rem; }
+.ab-guests    { text-align: center; }
+.ab-guest-name { font-weight: 500; }
+.ab-notes-icon { cursor: default; }
+
+/* Highlight pending rows */
+.ab-row-pending td {
+  background: rgba(255, 165, 0, 0.04);
+}
+
+/* Status badges */
+.ab-status {
+  display: inline-block;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.ab-status-pending   { background: rgba(255, 165, 0, 0.15);  color: #FFA500; }
+.ab-status-confirmed { background: rgba(46, 204, 113, 0.15); color: #2ECC71; }
+.ab-status-completed { background: rgba(136, 146, 160, 0.15);color: #8892A0; }
+.ab-status-cancelled { background: rgba(233, 69, 96, 0.15);  color: #E94560; }
+
+/* Action buttons (inline in table) */
+.ab-actions {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: nowrap;
+}
+
+.ab-btn {
+  padding: 0.25rem 0.6rem;
+  border-radius: var(--radius);
+  border: none;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s;
+  white-space: nowrap;
+}
+
+.ab-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.ab-btn-confirm  { background: #2ECC71; color: #0d1b2a; }
+.ab-btn-complete { background: #3498DB; color: #fff; }
+.ab-btn-reject   { background: rgba(233, 69, 96, 0.15); color: #E94560; border: 1px solid rgba(233,69,96,0.3); }
+
+.ab-btn-confirm:not(:disabled):hover  { opacity: 0.85; }
+.ab-btn-complete:not(:disabled):hover { opacity: 0.85; }
+.ab-btn-reject:not(:disabled):hover   { background: rgba(233, 69, 96, 0.25); }
+
+/* Action spinner */
+.ab-action-spinner {
+  margin-bottom: 0.5rem;
+  font-style: italic;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .ab-stats {
+    gap: 0.5rem;
+  }
+
+  .ab-stat {
+    padding: 0.75rem;
+  }
+
+  .ab-stat-num {
+    font-size: 1.5rem;
+  }
+
+  .ab-table th:nth-child(3),
+  .ab-table td:nth-child(3),
+  .ab-table th:nth-child(4),
+  .ab-table td:nth-child(4) {
+    display: none;
+  }
+}
