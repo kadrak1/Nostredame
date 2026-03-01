@@ -851,3 +851,282 @@ textarea:focus {
     padding: 0.4rem 0.5rem;
   }
 }
+
+/* ================================================================
+   Guest Booking Page
+   ================================================================ */
+
+.bk-page {
+  min-height: 100vh;
+  padding: 2rem 1rem 4rem;
+  background-color: var(--bg-primary);
+}
+
+.bk-container {
+  max-width: 760px;
+  margin: 0 auto;
+}
+
+.bk-header {
+  margin-bottom: 2rem;
+}
+
+.bk-back-link {
+  display: inline-block;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  margin-bottom: 0.75rem;
+  text-decoration: none;
+  transition: color 0.15s;
+}
+
+.bk-back-link:hover {
+  color: var(--text-primary);
+}
+
+.bk-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+/* --- Step indicator --- */
+.bk-steps {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 2rem;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.bk-step {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.bk-step-circle {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  font-weight: 700;
+  border: 2px solid #2a3a5c;
+  background-color: var(--bg-card);
+  color: var(--text-muted);
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+
+.bk-step.active .bk-step-circle {
+  border-color: var(--accent);
+  background-color: var(--accent);
+  color: white;
+}
+
+.bk-step.done .bk-step-circle {
+  border-color: var(--success);
+  background-color: var(--success);
+  color: white;
+}
+
+.bk-step-label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-left: 0.5rem;
+  white-space: nowrap;
+}
+
+.bk-step.active .bk-step-label {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.bk-step.done .bk-step-label {
+  color: var(--success);
+}
+
+.bk-step-line {
+  width: 40px;
+  height: 2px;
+  background-color: #2a3a5c;
+  margin: 0 0.5rem;
+  flex-shrink: 0;
+}
+
+/* --- Card (form container) --- */
+.bk-card {
+  background-color: var(--bg-card);
+  border-radius: var(--radius);
+  padding: 1.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.bk-card-wide {
+  max-width: 100%;
+}
+
+.bk-card-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+}
+
+/* --- Row layout for date/time pair --- */
+.bk-row {
+  display: flex;
+  gap: 1rem;
+}
+
+.bk-next-btn {
+  width: 100%;
+  margin-top: 0.5rem;
+}
+
+/* --- Table legend --- */
+.bk-table-legend {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  flex-wrap: wrap;
+}
+
+.bk-legend-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* --- Floor plan canvas --- */
+.bk-canvas-wrap {
+  width: 100%;
+  overflow: hidden;
+  border-radius: var(--radius);
+  border: 1px solid #1a2a4a;
+  margin-bottom: 1rem;
+  line-height: 0;
+}
+
+/* --- Selected table info badge --- */
+.bk-selected-info {
+  background-color: rgba(233, 69, 96, 0.12);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius);
+  padding: 0.6rem 1rem;
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+  color: var(--text-primary);
+}
+
+/* --- Navigation row --- */
+.bk-nav {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: space-between;
+  margin-top: 0.5rem;
+}
+
+.bk-nav .btn {
+  flex: 1;
+}
+
+/* --- Optional field label suffix --- */
+.bk-optional {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  font-weight: 400;
+}
+
+/* --- Success screen --- */
+.bk-success {
+  text-align: center;
+}
+
+.bk-success-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background-color: rgba(46, 204, 113, 0.15);
+  border: 2px solid var(--success);
+  color: var(--success);
+  font-size: 1.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1.25rem;
+}
+
+.bk-success-sub {
+  color: var(--text-muted);
+  margin-bottom: 1.5rem;
+}
+
+.bk-summary {
+  background-color: var(--bg-input);
+  border-radius: var(--radius);
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.25rem;
+  text-align: left;
+}
+
+.bk-summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.4rem 0;
+  font-size: 0.9rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.bk-summary-row:last-child {
+  border-bottom: none;
+}
+
+.bk-summary-row span {
+  color: var(--text-muted);
+}
+
+.bk-status-pending {
+  color: #f39c12;
+}
+
+.bk-save-hint {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-bottom: 1.5rem;
+}
+
+/* --- Mobile --- */
+@media (max-width: 600px) {
+  .bk-page {
+    padding: 1.25rem 0.75rem 3rem;
+  }
+
+  .bk-card {
+    padding: 1.25rem;
+  }
+
+  .bk-row {
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .bk-step-label {
+    display: none;
+  }
+
+  .bk-step-line {
+    width: 24px;
+  }
+
+  .bk-nav {
+    flex-direction: column-reverse;
+  }
+}
