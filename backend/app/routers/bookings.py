@@ -4,6 +4,7 @@ import hmac as hmac_mod
 from datetime import date as date_type, time as time_type
 from typing import Annotated
 
+import structlog
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -22,8 +23,12 @@ from app.schemas.booking import (
     BookingPublic,
     PhoneVerify,
 )
+from app.services.audit import log_action
 from app.services.security import decrypt_phone, encrypt_phone, hash_phone, mask_phone
 from app.services.venue_helpers import ensure_venue_id, get_first_venue
+from app.utils import get_client_ip
+
+logger = structlog.get_logger(__name__)
 
 router = APIRouter(tags=["bookings"])
 
@@ -86,6 +91,7 @@ def _booking_to_admin(booking: Booking) -> BookingAdmin:
         plain = decrypt_phone(booking.guest_phone_encrypted)
         schema.guest_phone_masked = mask_phone(plain)
     except Exception:
+        logger.warning("phone_decrypt_failed", booking_id=booking.id)
         schema.guest_phone_masked = "***"
     return schema
 
@@ -160,13 +166,14 @@ async def get_available_tables(
     response_model=BookingPublic,
     status_code=status.HTTP_201_CREATED,
 )
-@limiter.limit("5/hour")
+@limiter.limit("20/hour")
 async def create_booking(
     request: Request,
     body: BookingCreate,
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> BookingPublic:
-    """Create a booking. Rate-limited: 5 per hour per IP."""
+    """Create a booking. Rate-limited: 20 per hour per IP (shared venue WiFi)."""
+    ip = get_client_ip(request)
     venue = await get_first_venue(db)
 
     # Verify table belongs to venue
@@ -209,6 +216,24 @@ async def create_booking(
     db.add(booking)
     await db.flush()
     await db.refresh(booking)
+
+    logger.info(
+        "booking_created",
+        booking_id=booking.id,
+        table_id=booking.table_id,
+        date=str(booking.date),
+        guest=body.guest_name,
+    )
+    await log_action(
+        db,
+        "booking_created",
+        details=(
+            f"booking_id={booking.id} table_id={booking.table_id} "
+            f"date={booking.date} guest={body.guest_name}"
+        ),
+        ip_address=ip,
+    )
+
     return BookingPublic.model_validate(booking)
 
 
@@ -244,10 +269,13 @@ async def cancel_booking(
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> BookingPublic:
     """Guest cancels their booking. Rate-limited to prevent phone brute-force."""
+    ip = get_client_ip(request)
     stmt = select(Booking).where(Booking.id == booking_id)
     booking = (await db.execute(stmt)).scalar_one_or_none()
     if booking is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Бронь не найдена")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Бронь не найдена"
+        )
 
     if booking.status in (BookingStatus.cancelled, BookingStatus.completed):
         raise HTTPException(
@@ -258,7 +286,10 @@ async def cancel_booking(
     # Verify ownership via phone hash
     guest_stmt = select(Guest).where(Guest.id == booking.guest_id)
     guest = (await db.execute(guest_stmt)).scalar_one_or_none()
-    if guest is None or not hmac_mod.compare_digest(guest.phone_hash, hash_phone(body.guest_phone)):
+    if guest is None or not hmac_mod.compare_digest(
+        guest.phone_hash, hash_phone(body.guest_phone)
+    ):
+        logger.warning("booking_cancel_phone_mismatch", booking_id=booking_id)
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Номер телефона не совпадает",
@@ -267,6 +298,15 @@ async def cancel_booking(
     booking.status = BookingStatus.cancelled
     await db.flush()
     await db.refresh(booking)
+
+    logger.info("booking_cancelled_by_guest", booking_id=booking_id)
+    await log_action(
+        db,
+        "booking_cancelled",
+        details=f"booking_id={booking_id} by=guest",
+        ip_address=ip,
+    )
+
     return BookingPublic.model_validate(booking)
 
 
@@ -323,6 +363,15 @@ async def confirm_booking(
     booking.status = BookingStatus.confirmed
     await db.flush()
     await db.refresh(booking)
+
+    logger.info("booking_confirmed", booking_id=booking_id, admin_id=user.id)
+    await log_action(
+        db,
+        "booking_confirmed",
+        user_id=user.id,
+        details=f"booking_id={booking_id}",
+    )
+
     return _booking_to_admin(booking)
 
 
@@ -342,6 +391,15 @@ async def reject_booking(
     booking.status = BookingStatus.cancelled
     await db.flush()
     await db.refresh(booking)
+
+    logger.info("booking_rejected", booking_id=booking_id, admin_id=user.id)
+    await log_action(
+        db,
+        "booking_rejected",
+        user_id=user.id,
+        details=f"booking_id={booking_id}",
+    )
+
     return _booking_to_admin(booking)
 
 
@@ -361,4 +419,13 @@ async def complete_booking(
     booking.status = BookingStatus.completed
     await db.flush()
     await db.refresh(booking)
+
+    logger.info("booking_completed", booking_id=booking_id, admin_id=user.id)
+    await log_action(
+        db,
+        "booking_completed",
+        user_id=user.id,
+        details=f"booking_id={booking_id}",
+    )
+
     return _booking_to_admin(booking)

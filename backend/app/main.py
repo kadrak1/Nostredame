@@ -11,7 +11,14 @@ from slowapi.errors import RateLimitExceeded
 from app.config import settings
 from app.database import engine
 from app.limiter import limiter
+from app.logging_config import setup_logging
+from app.middleware.logging_middleware import RequestLoggingMiddleware
 from app.routers import auth, bookings, health, tables, tobaccos, venue
+
+# ---------------------------------------------------------------------------
+# Logging — configure structlog before any logger is used
+# ---------------------------------------------------------------------------
+setup_logging(debug=settings.debug)
 
 
 # --- App lifecycle ---
@@ -47,6 +54,10 @@ app.add_middleware(
     allow_methods=["GET", "POST", "PUT", "DELETE"],
     allow_headers=["Authorization", "Content-Type"],
 )
+
+
+# --- Request logging (bind request_id + ip, emit http_request log) ---
+app.add_middleware(RequestLoggingMiddleware)
 
 
 # --- Security headers middleware ---
