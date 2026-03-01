@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import api from '../../api/client';
 
 interface VenueInfo {
@@ -9,16 +9,28 @@ interface VenueInfo {
   working_hours: Record<string, { open: string; close: string }> | null;
 }
 
-export default function AdminDashboard() {
-  const [venue, setVenue] = useState<VenueInfo | null>(null);
+const DAY_LABELS: Record<string, string> = {
+  mon: 'Пн',
+  tue: 'Вт',
+  wed: 'Ср',
+  thu: 'Чт',
+  fri: 'Пт',
+  sat: 'Сб',
+  sun: 'Вс',
+};
 
-  useEffect(() => {
-    api.get<VenueInfo>('/venue/detail').then((r) => setVenue(r.data)).catch(() => {});
-  }, []);
+export default function AdminDashboard() {
+  const { data: venue, isLoading, isError } = useQuery({
+    queryKey: ['venue-detail'],
+    queryFn: () => api.get<VenueInfo>('/venue/detail').then((r) => r.data),
+  });
 
   return (
     <div className="admin-page">
       <h1>Обзор</h1>
+
+      {isLoading && <p className="info-muted">Загрузка...</p>}
+      {isError && <p className="error">Не удалось загрузить данные заведения</p>}
 
       {venue && (
         <div className="info-cards">
@@ -51,13 +63,3 @@ export default function AdminDashboard() {
     </div>
   );
 }
-
-const DAY_LABELS: Record<string, string> = {
-  mon: 'Пн',
-  tue: 'Вт',
-  wed: 'Ср',
-  thu: 'Чт',
-  fri: 'Пт',
-  sat: 'Сб',
-  sun: 'Вс',
-};
