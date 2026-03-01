@@ -12,7 +12,8 @@ export default function AdminLogin() {
   const location = useLocation();
   const auth = useAuth();
 
-  const from = (location.state as { from?: { pathname: string } })?.from?.pathname || '/admin';
+  const rawFrom = (location.state as { from?: { pathname: string } })?.from?.pathname;
+  const from = rawFrom?.startsWith('/') && !rawFrom.startsWith('//') ? rawFrom : '/admin';
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();

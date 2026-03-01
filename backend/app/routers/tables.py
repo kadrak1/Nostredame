@@ -24,7 +24,6 @@ from app.services.venue_helpers import (
     get_active_tables,
     get_first_venue,
     get_table_or_404,
-    get_venue_by_id,
 )
 
 router = APIRouter(tags=["tables"])
