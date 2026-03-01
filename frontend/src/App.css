@@ -1126,3 +1126,175 @@ textarea:focus {
     flex-direction: column-reverse;
   }
 }
+
+/* ==========================================================================
+   Admin Bookings Dashboard  (.ab-*)
+   ========================================================================== */
+
+.ab-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.ab-header h1 {
+  margin: 0;
+}
+
+.ab-header-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+/* Stats cards */
+.ab-stats {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.ab-stat {
+  flex: 1;
+  min-width: 120px;
+  border-radius: var(--radius);
+  padding: 1rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.ab-stat-pending  { background: rgba(255, 165, 0, 0.10); }
+.ab-stat-confirmed { background: rgba(46, 204, 113, 0.10); }
+.ab-stat-total    { background: rgba(136, 146, 160, 0.10); }
+
+.ab-stat-num {
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.ab-stat-pending  .ab-stat-num  { color: #FFA500; }
+.ab-stat-confirmed .ab-stat-num { color: #2ECC71; }
+.ab-stat-total    .ab-stat-num  { color: #8892A0; }
+
+.ab-stat-label {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  margin-top: 0.25rem;
+}
+
+/* Date filter clear button */
+.ab-filter-date {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.5rem;
+}
+
+.ab-clear-btn {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 0 0.25rem;
+  line-height: 1;
+  margin-bottom: 0.1rem;
+  transition: color 0.15s;
+}
+
+.ab-clear-btn:hover { color: #E94560; }
+
+/* Table customizations */
+.ab-table th:last-child,
+.ab-table td:last-child {
+  white-space: nowrap;
+}
+
+.ab-id        { color: var(--text-secondary); font-size: 0.85rem; }
+.ab-phone     { font-family: monospace; font-size: 0.85rem; color: var(--text-secondary); }
+.ab-table-num { font-weight: 600; }
+.ab-time      { white-space: nowrap; font-size: 0.9rem; }
+.ab-guests    { text-align: center; }
+.ab-guest-name { font-weight: 500; }
+.ab-notes-icon { cursor: default; }
+
+/* Highlight pending rows */
+.ab-row-pending td {
+  background: rgba(255, 165, 0, 0.04);
+}
+
+/* Status badges */
+.ab-status {
+  display: inline-block;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.ab-status-pending   { background: rgba(255, 165, 0, 0.15);  color: #FFA500; }
+.ab-status-confirmed { background: rgba(46, 204, 113, 0.15); color: #2ECC71; }
+.ab-status-completed { background: rgba(136, 146, 160, 0.15);color: #8892A0; }
+.ab-status-cancelled { background: rgba(233, 69, 96, 0.15);  color: #E94560; }
+
+/* Action buttons (inline in table) */
+.ab-actions {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: nowrap;
+}
+
+.ab-btn {
+  padding: 0.25rem 0.6rem;
+  border-radius: var(--radius);
+  border: none;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s;
+  white-space: nowrap;
+}
+
+.ab-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.ab-btn-confirm  { background: #2ECC71; color: #0d1b2a; }
+.ab-btn-complete { background: #3498DB; color: #fff; }
+.ab-btn-reject   { background: rgba(233, 69, 96, 0.15); color: #E94560; border: 1px solid rgba(233,69,96,0.3); }
+
+.ab-btn-confirm:not(:disabled):hover  { opacity: 0.85; }
+.ab-btn-complete:not(:disabled):hover { opacity: 0.85; }
+.ab-btn-reject:not(:disabled):hover   { background: rgba(233, 69, 96, 0.25); }
+
+/* Action spinner */
+.ab-action-spinner {
+  margin-bottom: 0.5rem;
+  font-style: italic;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .ab-stats {
+    gap: 0.5rem;
+  }
+
+  .ab-stat {
+    padding: 0.75rem;
+  }
+
+  .ab-stat-num {
+    font-size: 1.5rem;
+  }
+
+  .ab-table th:nth-child(3),
+  .ab-table td:nth-child(3),
+  .ab-table th:nth-child(4),
+  .ab-table td:nth-child(4) {
+    display: none;
+  }
+}
