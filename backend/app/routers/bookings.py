@@ -169,13 +169,13 @@ async def get_available_tables(
     response_model=BookingPublic,
     status_code=status.HTTP_201_CREATED,
 )
-@limiter.limit("5/hour")
+@limiter.limit("20/hour")
 async def create_booking(
     request: Request,
     body: BookingCreate,
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> BookingPublic:
-    """Create a booking. Rate-limited: 5 per hour per IP."""
+    """Create a booking. Rate-limited: 20 per hour per IP (shared venue WiFi)."""
     ip = get_client_ip(request)
     venue = await get_first_venue(db)
 
