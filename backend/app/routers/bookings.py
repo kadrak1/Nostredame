@@ -1,5 +1,6 @@
 """Bookings router — public booking flow + admin management."""
 
+import hmac as hmac_mod
 from datetime import date as date_type, time as time_type
 from typing import Annotated
 
@@ -214,11 +215,13 @@ async def create_booking(
 # ---------------------------------------------------------------------------
 
 @router.get("/bookings/{booking_id}", response_model=BookingPublic)
+@limiter.limit("30/minute")
 async def get_booking(
+    request: Request,
     booking_id: int,
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> BookingPublic:
-    """Public — get booking status by ID."""
+    """Public — get booking status by ID. Rate-limited to prevent enumeration."""
     stmt = select(Booking).where(Booking.id == booking_id)
     booking = (await db.execute(stmt)).scalar_one_or_none()
     if booking is None:
@@ -231,12 +234,14 @@ async def get_booking(
 # ---------------------------------------------------------------------------
 
 @router.put("/bookings/{booking_id}/cancel", response_model=BookingPublic)
+@limiter.limit("10/minute")
 async def cancel_booking(
+    request: Request,
     booking_id: int,
     body: PhoneVerify,
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> BookingPublic:
-    """Guest cancels their booking by providing the original phone."""
+    """Guest cancels their booking. Rate-limited to prevent phone brute-force."""
     stmt = select(Booking).where(Booking.id == booking_id)
     booking = (await db.execute(stmt)).scalar_one_or_none()
     if booking is None:
@@ -251,7 +256,7 @@ async def cancel_booking(
     # Verify ownership via phone hash
     guest_stmt = select(Guest).where(Guest.id == booking.guest_id)
     guest = (await db.execute(guest_stmt)).scalar_one_or_none()
-    if guest is None or guest.phone_hash != hash_phone(body.guest_phone):
+    if guest is None or not hmac_mod.compare_digest(guest.phone_hash, hash_phone(body.guest_phone)):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Номер телефона не совпадает",
@@ -344,12 +349,12 @@ async def complete_booking(
     db: Annotated[AsyncSession, Depends(get_db)],
     user: AdminOrOwner,
 ) -> BookingAdmin:
-    """Admin — mark a booking as completed."""
+    """Admin — mark a confirmed booking as completed."""
     booking = await _get_admin_booking(db, booking_id, ensure_venue_id(user))
-    if booking.status == BookingStatus.cancelled:
+    if booking.status != BookingStatus.confirmed:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail="Нельзя завершить отменённую бронь",
+            detail=f"Завершить можно только подтверждённую бронь (статус: '{booking.status.value}')",
         )
     booking.status = BookingStatus.completed
     await db.flush()

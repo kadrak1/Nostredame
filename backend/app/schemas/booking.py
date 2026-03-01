@@ -22,21 +22,6 @@ def _validate_phone(v: str) -> str:
 # Table availability
 # ---------------------------------------------------------------------------
 
-class AvailableTablesQuery(BaseModel):
-    date: date
-    time_from: time
-    time_to: time
-    guests: int = Field(..., ge=1, le=50)
-
-    @field_validator("time_to")
-    @classmethod
-    def time_to_after_time_from(cls, v: time, info) -> time:
-        time_from = info.data.get("time_from")
-        if time_from and v <= time_from:
-            raise ValueError("Время окончания должно быть позже начала")
-        return v
-
-
 class AvailableTableItem(BaseModel):
     """Table info for the booking flow (read-only floor plan)."""
 
@@ -109,7 +94,7 @@ class BookingAdmin(BaseModel):
     time_to: time
     guest_count: int
     guest_name: str
-    guest_phone_masked: str = ""   # populated by router
+    guest_phone_masked: str = "***"   # populated by _booking_to_admin helper
     status: BookingStatus
     notes: str
     created_at: datetime
