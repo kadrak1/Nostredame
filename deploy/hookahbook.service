@@ -1,0 +1,52 @@
+# systemd unit for HookahBook on RPi5
+#
+# Install:
+#   sudo cp deploy/hookahbook.service /etc/systemd/system/hookahbook.service
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now hookahbook
+
+[Unit]
+Description=HookahBook (Docker Compose)
+Documentation=https://github.com/kadrak1/Nostredame
+After=network-online.target docker.service
+Wants=network-online.target
+Requires=docker.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+
+WorkingDirectory=/opt/hookahbook
+
+# Start: bring up production stack
+ExecStart=/usr/bin/docker compose \
+    -f docker-compose.yml \
+    -f docker-compose.prod.yml \
+    up --detach --remove-orphans
+
+# Stop: graceful shutdown with 30 s timeout
+ExecStop=/usr/bin/docker compose \
+    -f docker-compose.yml \
+    -f docker-compose.prod.yml \
+    down --timeout 30
+
+# Reload: pull latest images and recreate (used by deployment scripts)
+ExecReload=/usr/bin/docker compose \
+    -f docker-compose.yml \
+    -f docker-compose.prod.yml \
+    up --detach --remove-orphans --build
+
+# Restart on failure (e.g. Docker daemon crashed)
+Restart=on-failure
+RestartSec=30s
+
+# Give Docker enough time to pull images on first start
+TimeoutStartSec=300
+TimeoutStopSec=60
+
+# Security hardening for the unit itself
+PrivateTmp=true
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target

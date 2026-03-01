@@ -13,12 +13,22 @@ services:
       interval: 30s
       timeout: 5s
       retries: 3
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
 
   frontend:
     build: ./frontend
     container_name: hookahbook-frontend
     volumes:
       - frontend-dist:/output
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "3"
 
   caddy:
     image: caddy:2-alpine
@@ -37,6 +47,11 @@ services:
         condition: service_healthy
       frontend:
         condition: service_completed_successfully
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
 
 volumes:
   db-data:

@@ -1,32 +1,60 @@
-# Production Caddyfile — replace yourdomain.com with your real domain
-# Caddy will automatically obtain and renew HTTPS certificates
+# Production Caddyfile — RPi5 deployment
+# Caddy automatically obtains and renews TLS certificates via Let's Encrypt.
+# Set DOMAIN in .env before deploying (e.g. DOMAIN=hookahbook.example.com).
 
-yourdomain.com {
-    # Security headers
+{$DOMAIN} {
+    # ── Security headers ──────────────────────────────────────────────────
     header {
-        X-Content-Type-Options "nosniff"
-        X-Frame-Options "DENY"
-        X-XSS-Protection "0"
-        Referrer-Policy "strict-origin-when-cross-origin"
-        Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
-        Permissions-Policy "camera=(), microphone=(), geolocation=()"
-        Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self' https://oauth.telegram.org"
+        X-Content-Type-Options       nosniff
+        X-Frame-Options              DENY
+        X-XSS-Protection             "0"
+        Referrer-Policy              strict-origin-when-cross-origin
+        Strict-Transport-Security    "max-age=31536000; includeSubDomains; preload"
+        Permissions-Policy           "camera=(), microphone=(), geolocation=()"
+        Content-Security-Policy      "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self' https://oauth.telegram.org"
+        # Remove server version banner
+        -Server
     }
 
-    # Backend API (must be before frontend catch-all)
+    # ── API proxy ─────────────────────────────────────────────────────────
     handle /api/* {
-        reverse_proxy backend:8000
+        reverse_proxy backend:8000 {
+            # Forward real IP to FastAPI (consumed by get_client_ip in utils.py;
+            # backend trusts X-Forwarded-For only from 127.0.0.1/::1 = Caddy)
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Real-IP       {remote_host}
+        }
     }
 
-    # WebSocket
+    # ── WebSocket (future: order/booking status updates) ──────────────────
     handle /ws/* {
-        reverse_proxy backend:8000
+        reverse_proxy backend:8000 {
+            header_up X-Forwarded-For {remote_host}
+            header_up Connection      "Upgrade"
+            header_up Upgrade         "websocket"
+        }
     }
 
-    # Frontend SPA — static files (catch-all — last)
+    # ── Frontend SPA (catch-all) ──────────────────────────────────────────
     handle {
         root * /srv/frontend
         try_files {path} /index.html
-        file_server
+        file_server {
+            precompressed gzip br
+        }
     }
+
+    # ── Access log ────────────────────────────────────────────────────────
+    log {
+        output file /var/log/caddy/access.log {
+            roll_size 10MB
+            roll_keep 5
+        }
+        format json
+    }
+}
+
+# HTTP → HTTPS redirect (Caddy does this automatically, explicit for clarity)
+http://{$DOMAIN} {
+    redir https://{$DOMAIN}{uri} permanent
 }

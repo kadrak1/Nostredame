@@ -1,0 +1,65 @@
+# Production docker-compose for RPi5 (ARM64)
+# Usage:  docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+#
+# This file OVERRIDES settings from docker-compose.yml for production:
+#   - Log rotation on all services
+#   - Resource limits tuned for RPi5 (4 GB RAM, 4-core Cortex-A76)
+#   - Production Caddyfile mounted
+#   - Backup volume bound to SSD path
+
+services:
+  backend:
+    # Build for ARM64 explicitly (avoids emulation warnings)
+    build:
+      context: ./backend
+      args:
+        TARGETARCH: arm64
+    environment:
+      APP_ENV: production
+      DEBUG: "false"
+    volumes:
+      # db-data already defined in base compose; backup sidecar also needs it
+      - db-data:/app/data
+      - /opt/hookahbook/backups:/backups
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+    deploy:
+      resources:
+        limits:
+          cpus: "1.5"
+          memory: 512M
+        reservations:
+          cpus: "0.25"
+          memory: 128M
+
+  frontend:
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "3"
+
+  caddy:
+    volumes:
+      # Override dev Caddyfile with production version
+      - ./Caddyfile.production:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+      - frontend-dist:/srv/frontend:ro
+      - /opt/hookahbook/logs/caddy:/var/log/caddy
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 128M
+        reservations:
+          cpus: "0.1"
+          memory: 32M
