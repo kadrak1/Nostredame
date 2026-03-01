@@ -600,3 +600,254 @@ textarea:focus {
   font-size: 0.8rem;
   pointer-events: none;
 }
+
+/* ================================================================
+   Tobacco Catalog
+   ================================================================ */
+
+.tc-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.tc-header h1 {
+  margin-bottom: 0 !important;
+}
+
+/* --- Filters --- */
+.tc-filters {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.tc-filter-item {
+  min-width: 160px;
+}
+
+.tc-filter-item label {
+  font-size: 0.8rem;
+  margin-bottom: 0;
+}
+
+.tc-filter-item input,
+.tc-filter-item select {
+  padding: 6px 10px;
+  font-size: 0.85rem;
+}
+
+/* --- Table --- */
+.tc-table-wrap {
+  overflow-x: auto;
+}
+
+.tc-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.tc-table th {
+  text-align: left;
+  padding: 0.6rem 0.75rem;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid #1a2a4a;
+  white-space: nowrap;
+}
+
+.tc-table td {
+  padding: 0.6rem 0.75rem;
+  border-bottom: 1px solid rgba(26, 42, 74, 0.5);
+  vertical-align: middle;
+}
+
+.tc-table tbody tr:hover {
+  background-color: rgba(255, 255, 255, 0.03);
+}
+
+.tc-empty {
+  text-align: center;
+  color: var(--text-muted);
+  padding: 2rem 0.75rem !important;
+}
+
+.tc-count {
+  margin-top: 0.5rem;
+  font-size: 0.8rem;
+}
+
+/* --- Strength badge --- */
+.tc-strength {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  background-color: rgba(233, 69, 96, 0.15);
+  color: var(--accent);
+}
+
+/* --- Flavor tags --- */
+.tc-flavors {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.tc-tag {
+  display: inline-block;
+  padding: 2px 8px;
+  background-color: var(--bg-input);
+  border-radius: 4px;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+/* --- Stock toggle --- */
+.tc-stock-toggle {
+  padding: 3px 10px;
+  border: 1px solid;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  background: transparent;
+  transition: all 0.15s;
+}
+
+.tc-stock-toggle.in-stock {
+  border-color: var(--success);
+  color: var(--success);
+}
+
+.tc-stock-toggle.in-stock:hover {
+  background-color: rgba(46, 204, 113, 0.15);
+}
+
+.tc-stock-toggle.out-of-stock {
+  border-color: var(--text-muted);
+  color: var(--text-muted);
+}
+
+.tc-stock-toggle.out-of-stock:hover {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+/* --- Action buttons --- */
+.tc-actions {
+  white-space: nowrap;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.tc-btn-edit,
+.tc-btn-del {
+  padding: 3px 10px;
+  border: 1px solid #2a3a5c;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  background: transparent;
+  transition: all 0.15s;
+}
+
+.tc-btn-edit {
+  color: var(--text-muted);
+}
+
+.tc-btn-edit:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.tc-btn-del {
+  color: var(--text-muted);
+}
+
+.tc-btn-del:hover {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+/* --- Modal --- */
+.tc-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.tc-modal {
+  background-color: var(--bg-card);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  width: 100%;
+  max-width: 480px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.tc-modal-sm {
+  max-width: 360px;
+}
+
+.tc-modal h2 {
+  font-size: 1.25rem;
+  margin-bottom: 1rem;
+}
+
+.tc-checkbox-label {
+  display: flex !important;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+}
+
+.tc-checkbox-label input[type="checkbox"] {
+  width: auto;
+  margin: 0;
+}
+
+.tc-modal-actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+}
+
+.tc-modal-actions .btn {
+  padding: 8px 20px;
+  font-size: 0.9rem;
+}
+
+/* --- Mobile --- */
+@media (max-width: 768px) {
+  .tc-filters {
+    flex-direction: column;
+  }
+
+  .tc-filter-item {
+    min-width: 0;
+  }
+
+  .tc-table {
+    font-size: 0.8rem;
+  }
+
+  .tc-table th,
+  .tc-table td {
+    padding: 0.4rem 0.5rem;
+  }
+}
