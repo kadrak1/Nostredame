@@ -106,14 +106,16 @@ def _parse_time(s: str) -> time_type:
 # ---------------------------------------------------------------------------
 
 @router.get("/bookings/available-tables", response_model=list[AvailableTableItem])
+@limiter.limit("60/minute")
 async def get_available_tables(
+    request: Request,
     db: Annotated[AsyncSession, Depends(get_db)],
     booking_date: Annotated[date_type, Query(alias="date")],
     time_from: Annotated[str, Query()],
     time_to: Annotated[str, Query()],
     guests: Annotated[int, Query(ge=1, le=50)],
 ) -> list[AvailableTableItem]:
-    """Public — return tables free for the requested date/time window."""
+    """Public — return tables free for the requested date/time window. Rate-limited."""
     t_from = _parse_time(time_from)
     t_to = _parse_time(time_to)
 

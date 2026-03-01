@@ -965,10 +965,6 @@ textarea:focus {
   margin-bottom: 1.5rem;
 }
 
-.bk-card-wide {
-  max-width: 100%;
-}
-
 .bk-card-title {
   font-size: 1.25rem;
   font-weight: 700;

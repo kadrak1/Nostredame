@@ -6,7 +6,7 @@
  *   4. Confirmation
  */
 
-import { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { Stage, Layer, Rect, Circle, Text, Line } from 'react-konva';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
@@ -78,6 +78,7 @@ interface Step3Data {
 
 const CANVAS_W = 1200;
 const CANVAS_H = 800;
+const GRID_SIZE = 20;
 
 const COLORS = {
   canvasBg: '#0F1923',
@@ -237,7 +238,7 @@ function Step2({
   const [scale, setScale] = useState(1);
 
   // Load all tables + floor plan layout
-  const { data: floorData, isLoading: floorLoading } = useQuery({
+  const { data: floorData, isLoading: floorLoading, isError: floorError } = useQuery({
     queryKey: ['floor-plan'],
     queryFn: () => api.get<FloorPlanResponse>('/venue/floor-plan').then((r) => r.data),
     staleTime: 60_000,
@@ -280,6 +281,17 @@ function Step2({
 
   const isLoading = floorLoading || availLoading;
 
+  // Memoize static grid lines — 60 vertical + 40 horizontal = 100 Konva nodes
+  const gridLines = useMemo(() => {
+    const vLines = Array.from({ length: Math.ceil(CANVAS_W / GRID_SIZE) + 1 }, (_, i) => (
+      <Line key={`v${i}`} points={[i * GRID_SIZE, 0, i * GRID_SIZE, CANVAS_H]} stroke={COLORS.grid} strokeWidth={0.5} />
+    ));
+    const hLines = Array.from({ length: Math.ceil(CANVAS_H / GRID_SIZE) + 1 }, (_, i) => (
+      <Line key={`h${i}`} points={[0, i * GRID_SIZE, CANVAS_W, i * GRID_SIZE]} stroke={COLORS.grid} strokeWidth={0.5} />
+    ));
+    return [...vLines, ...hLines];
+  }, []);
+
   const selectedTable = allTables.find((t) => t.id === selectedTableId) ?? null;
 
   return (
@@ -296,6 +308,7 @@ function Step2({
       </div>
 
       {isLoading && <p className="info-muted">Загрузка плана зала...</p>}
+      {floorError && <p className="error">Не удалось загрузить план зала. Попробуйте обновить страницу.</p>}
       {availError && <p className="error">Не удалось загрузить доступные столы</p>}
 
       {!isLoading && (
@@ -308,14 +321,7 @@ function Step2({
             style={{ background: COLORS.canvasBg, borderRadius: '8px', display: 'block' }}
           >
             {/* Grid */}
-            <Layer listening={false}>
-              {Array.from({ length: Math.ceil(CANVAS_W / 20) + 1 }, (_, i) => (
-                <Line key={`v${i}`} points={[i * 20, 0, i * 20, CANVAS_H]} stroke={COLORS.grid} strokeWidth={0.5} />
-              ))}
-              {Array.from({ length: Math.ceil(CANVAS_H / 20) + 1 }, (_, i) => (
-                <Line key={`h${i}`} points={[0, i * 20, CANVAS_W, i * 20]} stroke={COLORS.grid} strokeWidth={0.5} />
-              ))}
-            </Layer>
+            <Layer listening={false}>{gridLines}</Layer>
 
             {/* Walls */}
             <Layer listening={false}>
@@ -451,9 +457,16 @@ function Step3({
   const [phone, setPhone] = useState(data.guest_phone);
   const [notes, setNotes] = useState(data.notes);
   const [error, setError] = useState('');
+  const submittingRef = useRef(false);  // HIGH-2: double-submit guard
+
+  // HIGH-2: reset guard on server error so user can retry
+  useEffect(() => {
+    if (submitError) submittingRef.current = false;
+  }, [submitError]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (submittingRef.current) return;  // HIGH-2: block concurrent submits
     setError('');
 
     const digits = phone.replace(/\D/g, '');
@@ -465,6 +478,7 @@ function Step3({
       setError('Введите ваше имя');
       return;
     }
+    submittingRef.current = true;
     onNext({ guest_name: name.trim(), guest_phone: phone.trim(), notes: notes.trim() });
   };
 
@@ -478,6 +492,7 @@ function Step3({
         Имя и фамилия
         <input
           type="text"
+          autoComplete="name"
           placeholder="Иван Петров"
           value={name}
           onChange={(e) => setName(e.target.value)}
@@ -490,6 +505,7 @@ function Step3({
         Телефон
         <input
           type="tel"
+          autoComplete="tel"
           placeholder="+7 999 123-45-67"
           value={phone}
           onChange={(e) => setPhone(e.target.value)}
@@ -555,11 +571,17 @@ function Step4({
         </div>
         <div className="bk-summary-row">
           <span>Стол</span>
-          <strong>#{tableNumber}</strong>
+          <strong>{tableNumber > 0 ? `#${tableNumber}` : `ID ${booking.table_id}`}</strong>
         </div>
         <div className="bk-summary-row">
           <span>Дата</span>
-          <strong>{step1.date}</strong>
+          <strong>
+            {new Date(step1.date + 'T00:00:00').toLocaleDateString('ru-RU', {
+              day: 'numeric',
+              month: 'long',
+              year: 'numeric',
+            })}
+          </strong>
         </div>
         <div className="bk-summary-row">
           <span>Время</span>
@@ -595,9 +617,6 @@ function Step4({
 /* ------------------------------------------------------------------ */
 /*  Main Booking page                                                   */
 /* ------------------------------------------------------------------ */
-
-// React needs to be imported for JSX in Fragment usage
-import React from 'react';
 
 export default function Booking() {
   const [step, setStep] = useState(0);
@@ -704,6 +723,10 @@ export default function Booking() {
             isSubmitting={createMutation.isPending}
             submitError={submitError}
           />
+        )}
+
+        {step === 3 && !bookingResult && (
+          <p className="info-muted">Загрузка...</p>
         )}
 
         {step === 3 && bookingResult && (
