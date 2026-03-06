@@ -3,7 +3,7 @@
 **Phase**: 3
 **PRD Requirement**: — (Phase 3)
 **Status**: Planned
-**Dependencies**: T-070 (telegram bot), T-080 (guest auth)
+**Dependencies**: T-070 (telegram bot), T-080 (guest auth — `get_current_guest()` dependency)
 **Date**: 2026-03-07
 
 ---
@@ -41,7 +41,8 @@
 - **FR-110-03**: За 2 часа до `booking.time_from` — отправить напоминание (cron-задача каждые 15 минут)
 - **FR-110-04**: При смене статуса заказа на `served` — отправить уведомление "Ваш кальян готов!"
 - **FR-110-05**: При смене статуса заказа на `accepted` — отправить "Заказ принят, готовим"
-- **FR-110-06**: Telegram-уведомление отправляется только если `Guest.telegram_chat_id IS NOT NULL`
+- **FR-110-06**: Telegram-уведомление отправляется только если `Guest.telegram_id IS NOT NULL` (поле `telegram_id` типа `String(50)` в модели `Guest`)
+- **FR-110-06a**: Статус `preparing` — намеренно без уведомлений (промежуточный технический статус, не значимый для гостя)
 - **FR-110-07**: Отправка через прямой HTTP-запрос к Telegram Bot API (`httpx`, без экземпляра бота)
 
 ### 3.2 Канал: Web Push
@@ -103,11 +104,14 @@ CREATE INDEX ix_push_subscriptions_guest_id ON push_subscriptions(guest_id);
 ### 5.2 Изменение таблицы `guests`
 
 ```sql
-ALTER TABLE guests ADD COLUMN notification_preference TEXT NOT NULL
+ALTER TABLE guests ADD COLUMN notification_preference JSON NOT NULL
     DEFAULT '{"telegram": true, "web_push": true}';
+ALTER TABLE guests ADD COLUMN reminder_sent_at DATETIME;  -- для дедупликации напоминаний
 ```
 
 ### 5.3 SQLAlchemy-модель `PushSubscription`
+
+Максимум 5 подписок на гостя — проверяется в сервисном слое перед INSERT через `SELECT COUNT ... FOR UPDATE`, а не только на уровне HTTP (защита от race condition).
 
 ```python
 # backend/app/models/push_subscription.py
@@ -128,13 +132,16 @@ class PushSubscription(Base):
 
 ### 5.4 Изменение модели `Guest`
 
+Используем `JSON` (как в `venues.working_hours`) для автоматической сериализации:
+
 ```python
 # Добавить в backend/app/models/guest.py
 notification_preference = Column(
-    Text,
+    JSON,
     nullable=False,
-    default='{"telegram": true, "web_push": true}'
+    default=lambda: {"telegram": True, "web_push": True}
 )
+reminder_sent_at = Column(DateTime(timezone=True))  # последняя отправленная напоминалка
 push_subscriptions = relationship("PushSubscription", back_populates="guest",
                                   cascade="all, delete-orphan")
 ```
@@ -164,7 +171,7 @@ push_subscriptions = relationship("PushSubscription", back_populates="guest",
   }
 }
 
-// Response 200
+// Response 201 Created (upsert: если endpoint уже существует — вернуть 200 с тем же id)
 {
   "id": 42,
   "created_at": "2026-03-07T12:00:00Z"
@@ -173,21 +180,21 @@ push_subscriptions = relationship("PushSubscription", back_populates="guest",
 
 **Errors**:
 - `401` — не авторизован
+- `409` — достигнут лимит 5 подписок на гостя
 - `422` — невалидный endpoint/ключи
 
 ---
 
-### 6.2 `DELETE /api/push/subscribe`
-**Описание**: Удалить Web Push подписку (отписка)
-**Auth**: Guest JWT
+### 6.2 `DELETE /api/push/subscribe/{subscription_id}`
+**Описание**: Удалить Web Push подписку по ID (отписка). Использовать `id` из ответа `POST /subscribe`.
+**Auth**: Guest JWT (гость может удалять только свои подписки — проверять `guest_id`)
 
-```json
-// Request
-{
-  "endpoint": "https://fcm.googleapis.com/fcm/send/..."
-}
+```
+DELETE /api/push/subscribe/42
 
 // Response 204 No Content
+// 404 — подписка не найдена
+// 403 — чужая подписка
 ```
 
 ---
@@ -201,7 +208,7 @@ push_subscriptions = relationship("PushSubscription", back_populates="guest",
 {
   "telegram": true,
   "web_push": false,
-  "has_telegram": true,      // telegram_chat_id != null
+  "has_telegram": true,      // telegram_id != null (поле Guest.telegram_id)
   "push_subscriptions": 2    // кол-во активных подписок
 }
 ```
@@ -244,13 +251,15 @@ push_subscriptions = relationship("PushSubscription", back_populates="guest",
     onError?: (err: Error) => void;
   }
   ```
-- **Отображение**: кнопка с иконкой колокольчика, состояние `subscribed/unsubscribed/unsupported/loading`
+- **Отображение**: кнопка с иконкой колокольчика, состояние `subscribed/unsubscribed/unsupported/loading/denied`
+  - `denied` — пользователь ранее отказал в разрешении (`Notification.permission === 'denied'`). В этом состоянии кнопка показывает: "Уведомления заблокированы. Разрешите их в настройках браузера."
+- **Передача VAPID_PUBLIC_KEY**: из переменной окружения Vite `VITE_VAPID_PUBLIC_KEY` (публичный ключ безопасен для клиента). Добавить в `.env.example` и `frontend/.env.example`.
 
 ### 7.2 `frontend/src/pages/GuestNotifications.tsx`
 - **Маршрут**: `/guest/notifications`
 - **Назначение**: Страница управления уведомлениями
 - **Секции**:
-  - Переключатель "Уведомления в Telegram" (disabled если нет telegram_chat_id)
+  - Переключатель "Уведомления в Telegram" (disabled если нет `telegram_id`)
   - `PushSubscribeButton` — управление Web Push
   - Список активных подписок с кнопкой "Удалить"
 - **Использует**: `GET /api/guest/notifications`, `PUT /api/guest/notifications`
@@ -285,11 +294,13 @@ self.addEventListener('notificationclick', event => {
 
 ### 8.1 Существующие файлы, которые необходимо изменить
 
+> **Внимание**: T-112 и T-113 требуют завершённого T-080 (guest auth). Все эндпоинты `/api/push/*` и `/api/guest/notifications` используют `get_current_guest` dependency из T-080 (`backend/app/dependencies.py`).
+
 | Файл | Изменение |
 |------|-----------|
-| `backend/app/models/guest.py` | Добавить `notification_preference` (Text), `push_subscriptions` relationship |
-| `backend/app/routers/bookings.py` | После `admin PATCH /bookings/{id}/status` → вызов `notifications.notify_guest(...)` |
-| `backend/app/routers/orders.py` | После `PUT /master/orders/{id}/status` → вызов `notifications.notify_guest(...)` |
+| `backend/app/models/guest.py` | Добавить `notification_preference` (JSON), `reminder_sent_at` (DateTime), `telegram_blocked` (Boolean, default False), `push_subscriptions` relationship |
+| `backend/app/routers/bookings.py` | После `admin PATCH /bookings/{id}/status` → вызов `notifications.notify_guest(...)` через `BackgroundTasks` (с отдельной DB-сессией) |
+| `backend/app/routers/orders.py` | После `PUT /master/orders/{id}/status` → вызов `notifications.notify_guest(...)` через `BackgroundTasks` (с отдельной DB-сессией) |
 | `backend/app/schemas/guest.py` | Добавить `NotificationPreference`, `NotificationSettings` schemas |
 | `docker-compose.yml` | Добавить env-переменные `VAPID_PRIVATE_KEY`, `VAPID_PUBLIC_KEY`, `VAPID_CLAIMS_EMAIL` |
 | `frontend/src/main.tsx` | Регистрация Service Worker при старте приложения |
@@ -299,7 +310,7 @@ self.addEventListener('notificationclick', event => {
 | Файл | Назначение |
 |------|-----------|
 | `backend/app/models/push_subscription.py` | SQLAlchemy-модель `PushSubscription` |
-| `backend/app/routers/push.py` | Эндпоинты `/api/push/subscribe`, `/api/push/unsubscribe` |
+| `backend/app/routers/push.py` | Эндпоинты `POST /api/push/subscribe`, `DELETE /api/push/subscribe/{id}` |
 | `backend/app/routers/guest_notifications.py` | Эндпоинты `/api/guest/notifications` (GET/PUT) |
 | `backend/app/services/notifications.py` | Единая точка `notify_guest(guest_id, event, context)` |
 | `backend/app/services/webpush.py` | Отправка Web Push через pywebpush |
@@ -312,7 +323,7 @@ self.addEventListener('notificationclick', event => {
 ### 8.3 Переменные окружения (`.env`)
 
 ```dotenv
-# Web Push (VAPID)
+# Web Push (VAPID) — бэкенд
 VAPID_PRIVATE_KEY=...
 VAPID_PUBLIC_KEY=...
 VAPID_CLAIMS_EMAIL=admin@hookahbook.ru
@@ -320,6 +331,13 @@ VAPID_CLAIMS_EMAIL=admin@hookahbook.ru
 # Telegram (уже есть из T-070, переиспользуем)
 TELEGRAM_BOT_TOKEN=...
 ```
+
+```dotenv
+# frontend/.env  (публичный ключ безопасен для клиента)
+VITE_VAPID_PUBLIC_KEY=...   # тот же VAPID_PUBLIC_KEY, без "PRIVATE"
+```
+
+Добавить `VITE_VAPID_PUBLIC_KEY` в `frontend/.env.example`.
 
 ### 8.4 `telegram_notify.py` — механизм отправки
 
@@ -329,14 +347,23 @@ import httpx
 
 TELEGRAM_API = "https://api.telegram.org/bot{token}/sendMessage"
 
-async def send_telegram_message(chat_id: int | str, text: str) -> None:
-    """Send message directly via Telegram Bot API (no bot instance)."""
+async def send_telegram_message(chat_id: str, text: str) -> None:
+    """Send message directly via Telegram Bot API (no bot instance).
+
+    chat_id matches Guest.telegram_id (String(50), not Integer).
+    Telegram returns 200 OK with {"ok": false} on errors — must check both.
+    On 403 Forbidden (bot blocked) — caller sets Guest.telegram_blocked=True (не обнуляет telegram_id).
+    """
     async with httpx.AsyncClient() as client:
-        await client.post(
+        response = await client.post(
             TELEGRAM_API.format(token=settings.TELEGRAM_BOT_TOKEN),
             json={"chat_id": chat_id, "text": text, "parse_mode": "HTML"},
             timeout=5.0
         )
+        response.raise_for_status()          # 4xx/5xx → HTTPStatusError
+        result = response.json()
+        if not result.get("ok"):
+            raise ValueError(f"Telegram API error: {result.get('description')}")
 ```
 
 ### 8.5 `notifications.py` — роутер событий
@@ -352,19 +379,28 @@ class NotificationEvent(Enum):
     ORDER_ACCEPTED      = "order_accepted"
     ORDER_SERVED        = "order_served"
 
-async def notify_guest(guest_id: int, event: NotificationEvent, context: dict) -> None:
-    """Route notification to enabled channels for the guest."""
-    # 1. Load guest + preferences
-    # 2. If telegram enabled and telegram_chat_id set → send via telegram_notify
-    # 3. If web_push enabled → send via webpush to all active subscriptions
-    # Errors are caught and logged, not raised
+async def notify_guest(guest_id: int, event: NotificationEvent, context: dict,
+                       db: AsyncSession) -> None:
+    """Route notification to enabled channels for the guest.
+
+    IMPORTANT: Must be called with its own DB session (not the request session),
+    since it runs inside BackgroundTasks after the response is sent.
+    Uses Guest.telegram_id (String field, not telegram_chat_id).
+    Skips Telegram if Guest.telegram_id is None.
+    Errors are caught per-channel and logged via structlog (WARNING), never raised.
+    """
+    # 1. Load guest + preferences (own session)
+    # 2. If preferences.telegram and guest.telegram_id → send via telegram_notify
+    # 3. If preferences.web_push → send via webpush to all active subscriptions
+    # Cron-task for reminders: uses Guest.reminder_sent_at to avoid duplicates —
+    # only send if reminder_sent_at IS NULL or > 2.5 hours before booking.time_from
 ```
 
 ---
 
 ## 9. Acceptance Criteria / Критерии приёмки
 
-- [ ] При подтверждении брони через admin-панель гость с telegram_chat_id получает Telegram-сообщение в течение 5 секунд
+- [ ] При подтверждении брони через admin-панель гость с `telegram_id` получает Telegram-сообщение в течение 5 секунд
 - [ ] При отмене брони гость получает Telegram-сообщение с пометкой об отмене
 - [ ] За 2 часа до брони гость получает Telegram-напоминание (cron-задача отрабатывает)
 - [ ] При смене статуса заказа на `served` гость получает уведомление "Кальян готов" (Telegram и/или Web Push)
@@ -391,19 +427,21 @@ async def notify_guest(guest_id: int, event: NotificationEvent, context: dict) -
 
 **T-110** (S, ~3 ч):
 - Создать `PushSubscription` модель в `backend/app/models/push_subscription.py`
-- Добавить `notification_preference` и `push_subscriptions` в модель `Guest`
+- Добавить `notification_preference` (JSON), `reminder_sent_at` (DateTime) и `push_subscriptions` в модель `Guest`
 - Написать и применить две миграции Alembic
-- Добавить VAPID env-vars в `.env.example` и `docker-compose.yml`
+- Добавить `APScheduler` в `backend/requirements.txt`
+- Добавить VAPID env-vars в `.env.example`, `docker-compose.yml` и `frontend/.env.example`
 
 **T-111** (M, ~6 ч):
-- `telegram_notify.py` — async httpx-вызов к Telegram Bot API, тест с mock
+- `telegram_notify.py` — async httpx, проверка `response.json()["ok"]`, тест с mock
 - `webpush.py` — pywebpush отправка, обработка 410, тест с mock
-- `notifications.py` — роутер событий `notify_guest()`, retry-логика (3 попытки)
-- Интеграция вызовов в `routers/bookings.py` и `routers/orders.py` (BackgroundTasks)
-- Cron-задача для напоминаний (APScheduler или отдельный скрипт)
+- `notifications.py` — роутер событий `notify_guest(db)` с отдельной сессией, retry 3 попытки
+- Интеграция в `bookings.py` и `orders.py` через `BackgroundTasks` (отдельная DB-сессия)
+- APScheduler: cron каждые 15 мин, дедупликация через `Guest.reminder_sent_at`
+- Настройка APScheduler для single-worker (Uvicorn `--workers 1` в RPi5)
 
 **T-112** (S, ~3 ч):
-- Router `push.py`: `POST /api/push/subscribe`, `DELETE /api/push/subscribe`
+- Router `push.py`: `POST /api/push/subscribe`, `DELETE /api/push/subscribe/{id}`
 - Router `guest_notifications.py`: `GET /api/guest/notifications`, `PUT /api/guest/notifications`
 - Pydantic schemas в `schemas/push_subscription.py`
 - Регистрация роутеров в `main.py`
@@ -421,12 +459,12 @@ async def notify_guest(guest_id: int, event: NotificationEvent, context: dict) -
 
 ## 11. Open Questions / Открытые вопросы
 
-1. **Cron-задача для напоминаний**: использовать APScheduler (уже в зависимостях?) или отдельный скрипт, запускаемый через `cron` в Docker? APScheduler предпочтительнее — не требует отдельного контейнера.
+1. **Cron-задача для напоминаний**: использовать APScheduler (добавить в T-110). RPi5 деплоится с `--workers 1`, поэтому двойных запусков не будет. Дедупликация через `Guest.reminder_sent_at` — не отправлять, если поле уже установлено для текущей брони. **Решено: APScheduler + поле `reminder_sent_at`.**
 
-2. **Массовые уведомления**: если у гостя 5 активных Web Push подписок (разные браузеры) — отправлять на все? Предлагается: да, до 5 подписок на гостя (ограничить в `POST /subscribe`).
+2. **Массовые уведомления**: отправлять на все подписки гостя (до 5). Ограничение 5 подписок проверяется на уровне сервиса через `SELECT COUNT ... FOR UPDATE`. **Решено: лимит 5 подписок.**
 
-3. **Telegram: что если гость заблокировал бота?** — Telegram вернёт 403 Forbidden. Предлагается: поставить `telegram_chat_id = NULL` и логировать, чтобы не пытаться снова.
+3. **Telegram 403 Forbidden**: при блокировке бота не обнулять `telegram_id` (деструктивно). Вместо этого — установить флаг `telegram_blocked: bool` (добавить в модель `Guest`). Уведомления пропускаются при `telegram_blocked=True`. **Решено: флаг `telegram_blocked`, без потери `telegram_id`.**
 
-4. **VAPID-ключи**: кто генерирует при деплое? Предлагается: добавить в `scripts/generate-vapid.py` и документировать в `README.md`.
+4. **VAPID-ключи**: добавить `scripts/generate-vapid.py` (pywebpush: `webpush.generate_vapid_keys()`), задокументировать в `README.md`. Публичный ключ → `VITE_VAPID_PUBLIC_KEY` во фронтенд. **Решено: скрипт генерации.**
 
-5. **Связь гостя с Telegram**: как именно `telegram_chat_id` появляется в Guest? Через бота T-070 (команда `/start` с phone_hash deep link). Этот механизм нужно явно задокументировать в T-070.
+5. **Связь гостя с Telegram**: `Guest.telegram_id` (String(50)) устанавливается ботом T-070 через команду `/start phone_{phone_hash}`. Механизм нужно явно задокументировать в спецификации T-070. **Решено: задача для T-070.**
