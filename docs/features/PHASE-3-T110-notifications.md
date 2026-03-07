@@ -10,7 +10,7 @@
 
 ## 1. Overview / Обзор
 
-Гость бронирует стол или заказывает кальян — и уходит от стойки или ставит телефон в карман. Без уведомлений он не знает, подтверждена ли бронь и готов ли кальян. Это приводит к лишним вопросам персоналу и снижает удовлетворённость.
+Гость бронирует стол или заказывает кальян — и уходит от стойки или ставит телефон в карман. Без уведомлений он не знает, подтверждена ли бронь и принят ли заказ на кальян. Это приводит к лишним вопросам персоналу и снижает удовлетворённость.
 
 Данная фича добавляет push-уведомления по двум каналам:
 
@@ -19,17 +19,16 @@
 
 Ключевые события для уведомлений:
 - Бронь подтверждена / отменена / напоминание за 2 часа
-- Заказ кальяна принят / готов
+- Заказ кальяна принят (статус `accepted`)
 
 ---
 
 ## 2. User Stories
 
 - **US-110-1**: Как гость, сделавший бронь, я хочу получить уведомление в Telegram, когда администратор подтвердил или отменил мою бронь.
-- **US-110-2**: Как гость, заказавший кальян, я хочу получить уведомление, когда кальян готов и несут ко мне.
-- **US-110-3**: Как гость с активной бронью, я хочу получить напоминание за 2 часа до начала, чтобы не забыть.
-- **US-110-4**: Как гость, я хочу управлять своими предпочтениями по каналам уведомлений (Telegram, Web Push, или отключить).
-- **US-110-5**: Как гость без Telegram, я хочу подписаться на Web Push прямо в браузере, чтобы получать уведомления.
+- **US-110-2**: Как гость с активной бронью, я хочу получить напоминание за 2 часа до начала, чтобы не забыть.
+- **US-110-3**: Как гость, я хочу управлять своими предпочтениями по каналам уведомлений (Telegram, Web Push, или отключить).
+- **US-110-4**: Как гость без Telegram, я хочу подписаться на Web Push прямо в браузере, чтобы получать уведомления.
 
 ---
 
@@ -39,15 +38,14 @@
 - **FR-110-01**: При подтверждении брони (`BookingStatus.confirmed`) — отправить Telegram-сообщение гостю с деталями (дата, время, стол)
 - **FR-110-02**: При отмене брони (`BookingStatus.cancelled`) — отправить Telegram-сообщение с причиной (если есть)
 - **FR-110-03**: За 2 часа до `booking.time_from` — отправить напоминание (cron-задача каждые 15 минут)
-- **FR-110-04**: При смене статуса заказа на `served` — отправить уведомление "Ваш кальян готов!"
-- **FR-110-05**: При смене статуса заказа на `accepted` — отправить "Заказ принят, готовим"
-- **FR-110-06**: Telegram-уведомление отправляется только если `Guest.telegram_id IS NOT NULL` (поле `telegram_id` типа `String(50)` в модели `Guest`)
-- **FR-110-06a**: Статус `preparing` — намеренно без уведомлений (промежуточный технический статус, не значимый для гостя)
+- **FR-110-04**: При смене статуса заказа на `accepted` — отправить "Заказ принят, готовим"
+- **FR-110-05**: Telegram-уведомление отправляется только если `Guest.telegram_id IS NOT NULL` (поле `telegram_id` типа `String(50)` в модели `Guest`)
+- **FR-110-05a**: Статусы `preparing` и `served` — намеренно без уведомлений (не значимы для гостя; только `accepted` сигнализирует о начале изготовления)
 - **FR-110-07**: Отправка через прямой HTTP-запрос к Telegram Bot API (`httpx`, без экземпляра бота)
 
 ### 3.2 Канал: Web Push
 - **FR-110-08**: Сервис регистрирует подписку браузера (`PushSubscription`) через `POST /api/push/subscribe`
-- **FR-110-09**: При тех же событиях (FR-110-01...FR-110-05) — отправить Web Push всем активным подпискам гостя
+- **FR-110-09**: При тех же событиях (FR-110-01...FR-110-04) — отправить Web Push всем активным подпискам гостя
 - **FR-110-10**: Если доставка Web Push завершилась ошибкой 410 Gone — удалить подписку из БД (устаревший endpoint)
 - **FR-110-11**: Сервис использует библиотеку `pywebpush` с VAPID-ключами из `.env`
 - **FR-110-12**: Push-payload: `{ "title": "HookahBook", "body": "...", "url": "/guest/bookings/{id}" }`
@@ -300,7 +298,7 @@ self.addEventListener('notificationclick', event => {
 |------|-----------|
 | `backend/app/models/guest.py` | Добавить `notification_preference` (JSON), `reminder_sent_at` (DateTime), `telegram_blocked` (Boolean, default False), `push_subscriptions` relationship |
 | `backend/app/routers/bookings.py` | После `admin PATCH /bookings/{id}/status` → вызов `notifications.notify_guest(...)` через `BackgroundTasks` (с отдельной DB-сессией) |
-| `backend/app/routers/orders.py` | После `PUT /master/orders/{id}/status` → вызов `notifications.notify_guest(...)` через `BackgroundTasks` (с отдельной DB-сессией) |
+| `backend/app/routers/orders.py` | После `PUT /master/orders/{id}/status` (только при переходе в `accepted`) → вызов `notifications.notify_guest(...)` через `BackgroundTasks` (с отдельной DB-сессией) |
 | `backend/app/schemas/guest.py` | Добавить `NotificationPreference`, `NotificationSettings` schemas |
 | `docker-compose.yml` | Добавить env-переменные `VAPID_PRIVATE_KEY`, `VAPID_PUBLIC_KEY`, `VAPID_CLAIMS_EMAIL` |
 | `frontend/src/main.tsx` | Регистрация Service Worker при старте приложения |
@@ -377,7 +375,6 @@ class NotificationEvent(Enum):
     BOOKING_CANCELLED   = "booking_cancelled"
     BOOKING_REMINDER    = "booking_reminder"
     ORDER_ACCEPTED      = "order_accepted"
-    ORDER_SERVED        = "order_served"
 
 async def notify_guest(guest_id: int, event: NotificationEvent, context: dict,
                        db: AsyncSession) -> None:
@@ -403,7 +400,6 @@ async def notify_guest(guest_id: int, event: NotificationEvent, context: dict,
 - [ ] При подтверждении брони через admin-панель гость с `telegram_id` получает Telegram-сообщение в течение 5 секунд
 - [ ] При отмене брони гость получает Telegram-сообщение с пометкой об отмене
 - [ ] За 2 часа до брони гость получает Telegram-напоминание (cron-задача отрабатывает)
-- [ ] При смене статуса заказа на `served` гость получает уведомление "Кальян готов" (Telegram и/или Web Push)
 - [ ] Гость может подписаться на Web Push через страницу `/guest/notifications`
 - [ ] Гость может отключить конкретный канал (telegram/web_push) — уведомления по нему прекращаются
 - [ ] Устаревшая Web Push подписка (410) автоматически удаляется из БД
