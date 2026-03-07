@@ -57,6 +57,13 @@
 - FR-090-18: Типы событий: `order.created`, `order.updated`, `order.cancelled`
 - FR-090-19: Один кальянщик = одно WebSocket соединение
 
+### 3.6 Управление рекомендованными миксами
+- FR-090-20: Кальянщик/admin/owner может создавать рекомендованные миксы (модель `MasterRecommendation` из T-055)
+- FR-090-21: Форма создания микса: название (≤100 символов), уровень крепости (Лёгкий/Средний/Крепкий), список табаков с граммовкой
+- FR-090-22: Список рекомендаций в панели с возможностью включить/отключить (`is_active`) и удалить
+- FR-090-23: Максимум 10 активных рекомендаций на заведение (ошибка 422 при превышении)
+- FR-090-24: Рекомендации отображаются гостям в HookahBuilder сразу после сохранения
+
 ## 4. Non-Functional Requirements / Нефункциональные требования
 
 - NFR-090-01: Страница загружается < 2 сек на мобильном (3G)
@@ -119,7 +126,21 @@ assigned_master_id: Mapped[int | None] = mapped_column(
 - **Response** (200): обновлённый заказ
 - **Errors**: `404` — заказ не найден, `400` — недопустимый переход статуса, `403` — недостаточно прав
 
-### 6.3 WebSocket очереди для кальянщика
+### 6.3 CRUD рекомендованных миксов (только для роли master/admin/owner)
+- **Method**: `POST`
+- **URL**: `/api/master/recommendations`
+- **Auth**: `hookah_master | admin | owner`
+- **Request**: `{ "name": "Тропический микс", "strength_level": "medium", "items": [{"tobacco_id": 3, "weight_grams": 20}] }`
+- **Response** (201): созданный объект `MasterRecommendation`
+- **Errors**: `422` — превышен лимит 10 активных рекомендаций, табак не в наличии
+
+- **Method**: `GET` **URL**: `/api/master/recommendations` — все рекомендации заведения (admin-список, включая неактивные)
+- **Method**: `PUT` **URL**: `/api/master/recommendations/{id}` — обновить (название, состав, is_active)
+- **Method**: `DELETE` **URL**: `/api/master/recommendations/{id}` — удалить
+
+> Публичный эндпоинт `GET /api/master/recommendations?strength_level=X` описан в T-050 (6.4) — используется в HookahBuilder
+
+### 6.4 WebSocket очереди для кальянщика
 - **URL**: `WS /ws/master/orders`
 - **Auth**: JWT в query param `?token=<access_token>`
 - **Входящие события**:
@@ -174,6 +195,8 @@ assigned_master_id: Mapped[int | None] = mapped_column(
 | `frontend/src/pages/master/OrderHistory.tsx` | Новый файл |
 | `frontend/src/components/master/OrderCard.tsx` | Новый файл |
 | `frontend/src/hooks/useOrderNotification.ts` | Новый файл |
+| `frontend/src/pages/master/Recommendations.tsx` | Новый файл — CRUD рекомендаций |
+| `frontend/src/components/master/RecommendationForm.tsx` | Новый файл — форма создания/редактирования |
 
 ## 9. Acceptance Criteria / Критерии приёмки
 
@@ -188,6 +211,8 @@ assigned_master_id: Mapped[int | None] = mapped_column(
 - [ ] AC-9: При разрыве WebSocket — автоматическое переподключение
 - [ ] AC-10: Кальянщик не видит бронирования (только заказы кальянов)
 - [ ] AC-11: Кнопки крупные (44px+), корректны на мобильном
+- [ ] AC-12: Кальянщик может создать рекомендованный микс и он сразу появляется в HookahBuilder
+- [ ] AC-13: Деактивированный микс не отображается гостям в HookahBuilder
 
 ## 10. Engineering Tickets / Тикеты
 
@@ -198,6 +223,7 @@ assigned_master_id: Mapped[int | None] = mapped_column(
 | T-092 | MasterLayout + маршруты + auth guard | frontend | T-011 | S |
 | T-093 | OrderQueue страница + OrderCard компонент + WebSocket | frontend | T-091, T-092 | L |
 | T-094 | OrderHistory страница + звуковые уведомления (useOrderNotification) | frontend | T-092 | M |
+| T-095 | Recommendations страница + RecommendationForm в панели кальянщика | frontend | T-055, T-092 | M |
 
 ## 11. Open Questions / Открытые вопросы
 
