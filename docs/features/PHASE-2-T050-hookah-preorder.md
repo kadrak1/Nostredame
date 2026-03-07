@@ -20,7 +20,8 @@
 ## 2. User Stories
 
 - **US-050-1**: Как гость, я хочу выбрать кальян при бронировании стола, чтобы он был готов к моему приходу.
-- **US-050-2**: Как гость, я хочу выбрать крепость кальяна (лёгкий/средний/крепкий), чтобы не разбираться в числовых значениях.
+- **US-050-2**: Как гость, я хочу выбрать крепость кальяна (лёгкий/средний/крепкий), чтобы не разбираться в числовых значениях 1-10.
+- **US-050-6**: Как гость, я хочу видеть готовые рекомендованные миксы от кальянщика для выбранной крепости, чтобы не подбирать табаки самостоятельно.
 - **US-050-3**: Как гость, я хочу выбрать табаки из доступных, чтобы составить микс по вкусу.
 - **US-050-4**: Как гость, я хочу оставить комментарий к заказу (например, "больше мяты"), чтобы кальянщик учёл мои предпочтения.
 - **US-050-5**: Как кальянщик, я хочу видеть предзаказы кальянов привязанные к бронированиям, чтобы подготовить их заранее.
@@ -28,10 +29,11 @@
 ## 3. Functional Requirements / Функциональные требования
 
 ### 3.1 Конструктор кальяна (HookahBuilder)
-- FR-050-01: Выбор уровня крепости через 3 кнопки: "Лёгкий" (1-2), "Средний" (3), "Крепкий" (4-5) — маппинг на strength 1-5
+- FR-050-01: Выбор уровня крепости через 3 кнопки: "Лёгкий" (1-4), "Средний" (5-7), "Крепкий" (8-10) — маппинг на strength 1-10
+- FR-050-01a: При выборе уровня крепости — показать блок "Рекомендует кальянщик" с активными `MasterRecommendation` для данного `strength_level` (из `GET /api/master/recommendations?strength_level=X`). Кнопка "Выбрать этот микс" предзаполняет TobaccoSelector.
 - FR-050-02: Фильтрация доступных табаков по выбранной крепости через `GET /api/tobaccos?in_stock=true&strength_min=X&strength_max=Y`
 - FR-050-03: Выбор табаков (1-3 штуки) для микса — карточки с названием, брендом, вкусовым профилем
-- FR-050-04: Указание веса каждого табака (по умолчанию 15г, range slider 5-30г)
+- FR-050-04: Указание веса каждого табака (по умолчанию 20г, range slider 5-40г)
 - FR-050-05: Текстовое поле для комментария (до 200 символов)
 - FR-050-06: Предпросмотр кальяна перед подтверждением (сводка: крепость, табаки, вес, комментарий)
 
@@ -72,8 +74,27 @@ source: Mapped[OrderSource] = mapped_column(
 )
 ```
 
-### 5.3 Миграции
-- Alembic миграция: добавить колонку `source` в `hookah_orders` (default='booking_preorder')
+### 5.3 Новая модель `MasterRecommendation`
+```python
+# app/models/master_recommendation.py
+class MasterRecommendation(Base):
+    __tablename__ = "master_recommendations"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    venue_id: Mapped[int] = mapped_column(ForeignKey("venues.id"), index=True)
+    name: Mapped[str] = mapped_column(String(100))          # "Классика лёгкая"
+    strength_level: Mapped[str] = mapped_column(String(10)) # "light"|"medium"|"strong"
+    items: Mapped[dict] = mapped_column(JSON)                # [{tobacco_id, weight_grams}]
+    is_active: Mapped[bool] = mapped_column(default=True)
+    created_by: Mapped[int] = mapped_column(ForeignKey("users.id"))
+    created_at: Mapped[datetime] = mapped_column(default=func.now())
+```
+- `strength_level` маппинг: `"light"` → 1-4, `"medium"` → 5-7, `"strong"` → 8-10
+- Ограничение: максимум 10 активных рекомендаций на заведение
+
+### 5.4 Миграции
+- Alembic миграция 1: добавить колонку `source` в `hookah_orders` (default='booking_preorder')
+- Alembic миграция 2: создать таблицу `master_recommendations`
 
 ## 6. API Endpoints
 
@@ -89,8 +110,8 @@ source: Mapped[OrderSource] = mapped_column(
   "strength": 3,
   "notes": "Больше мяты, пожалуйста",
   "items": [
-    {"tobacco_id": 1, "weight_grams": 15.0},
-    {"tobacco_id": 5, "weight_grams": 10.0}
+    {"tobacco_id": 1, "weight_grams": 20.0},
+    {"tobacco_id": 5, "weight_grams": 15.0}
   ]
 }
 ```
@@ -105,8 +126,8 @@ source: Mapped[OrderSource] = mapped_column(
   "source": "booking_preorder",
   "notes": "Больше мяты, пожалуйста",
   "items": [
-    {"id": 1, "tobacco_id": 1, "tobacco_name": "Al Fakher Мята", "weight_grams": 15.0},
-    {"id": 2, "tobacco_id": 5, "tobacco_name": "Darkside Grape Core", "weight_grams": 10.0}
+    {"id": 1, "tobacco_id": 1, "tobacco_name": "Al Fakher Мята", "weight_grams": 20.0},
+    {"id": 2, "tobacco_id": 5, "tobacco_name": "Darkside Grape Core", "weight_grams": 15.0}
   ],
   "created_at": "2026-03-06T18:00:00"
 }
@@ -114,7 +135,7 @@ source: Mapped[OrderSource] = mapped_column(
 - **Errors**:
   - `404` — бронирование не найдено
   - `403` — телефон не совпадает с бронированием
-  - `400` — табак не в наличии, невалидный strength
+  - `400` — табак не в наличии, невалидный strength (допустимый диапазон 1-10)
   - `429` — rate limit exceeded
 
 ### 6.2 Список заказов к бронированию
@@ -125,9 +146,32 @@ source: Mapped[OrderSource] = mapped_column(
 
 ### 6.3 Публичный каталог табаков (уже существует, расширить фильтры)
 - **Method**: `GET`
-- **URL**: `/api/tobaccos?in_stock=true&strength_min=1&strength_max=2`
+- **URL**: `/api/tobaccos?in_stock=true&strength_min=1&strength_max=4`
 - **Auth**: public
-- **Доработка**: добавить параметры `strength_min`, `strength_max` к существующим фильтрам
+- **Доработка**: добавить параметры `strength_min`, `strength_max` к существующим фильтрам (диапазон 1-10)
+
+### 6.4 Рекомендации кальянщика
+- **Method**: `GET`
+- **URL**: `/api/master/recommendations?strength_level=light`
+- **Auth**: public
+- **Query params**: `strength_level` — `light` | `medium` | `strong` (обязательный)
+- **Response** (200):
+```json
+[
+  {
+    "id": 1,
+    "name": "Классика лёгкая",
+    "strength_level": "light",
+    "items": [
+      {"tobacco_id": 3, "tobacco_name": "Al Fakher Яблоко", "weight_grams": 20},
+      {"tobacco_id": 7, "tobacco_name": "Adalya Love 66", "weight_grams": 20}
+    ]
+  }
+]
+```
+- **Errors**: `400` — невалидный strength_level
+
+> CRUD для управления рекомендациями — в T-055 / T-090 (панель кальянщика)
 
 ## 7. Frontend Components / Компоненты
 
@@ -138,18 +182,24 @@ source: Mapped[OrderSource] = mapped_column(
   - `onCancel: () => void` — отмена
   - `tableId: number` — стол (для привязки)
   - `repeatSlot?: ReactNode` — слот для кнопки "Повторить" (Phase 3)
-- **Состояние**: strength → tobaccos (filtered) → selected items → notes → preview
+- **Состояние**: strength_level → recommendations + tobaccos (filtered) → selected items → notes → preview
 - **Шаги**:
-  1. Выбор крепости (3 карточки: Лёгкий / Средний / Крепкий)
-  2. Выбор табаков (карточки с чекбоксами, макс. 3)
-  3. Настройка веса + комментарий
+  1. Выбор крепости (3 карточки: Лёгкий 1-4 / Средний 5-7 / Крепкий 8-10)
+  2. Блок "Рекомендует кальянщик" (если есть `MasterRecommendation`для выбранного уровня) + выбор табаков вручную (карточки с чекбоксами, макс. 3)
+  3. Настройка веса (default 20г) + комментарий
   4. Предпросмотр + кнопка "Подтвердить"
 
 ### 7.2 `StrengthSelector`
 - **Путь**: `frontend/src/components/HookahBuilder/StrengthSelector.tsx`
 - 3 карточки с иконками и описанием
 
-### 7.3 `TobaccoSelector`
+### 7.3 `MasterRecommendations`
+- **Путь**: `frontend/src/components/HookahBuilder/MasterRecommendations.tsx`
+- Отображается между StrengthSelector и TobaccoSelector если `GET /api/master/recommendations?strength_level=X` вернул непустой список
+- Карточки рекомендаций: название + список табаков + кнопка "Выбрать этот микс"
+- При клике — предзаполняет TobaccoSelector выбранными позициями
+
+### 7.4 `TobaccoSelector`
 - **Путь**: `frontend/src/components/HookahBuilder/TobaccoSelector.tsx`
 - Карточки табаков с фильтрацией, чекбокс выбора, вкусовые теги
 
@@ -173,6 +223,8 @@ source: Mapped[OrderSource] = mapped_column(
 | `backend/app/routers/tobaccos.py` | Добавить фильтры `strength_min`, `strength_max` |
 | `backend/app/schemas/` | Новый файл `order.py` — Pydantic-схемы для заказов |
 | `frontend/src/pages/Booking.tsx` | Добавить экран успеха с кнопкой "Добавить кальян" |
+| `backend/app/models/master_recommendation.py` | Новая модель `MasterRecommendation` |
+| `backend/app/routers/master.py` | Добавить `GET /api/master/recommendations` (публичный) + CRUD (T-055) |
 | `frontend/src/components/HookahBuilder/` | Новая директория с компонентами |
 | `frontend/src/api/client.ts` | Добавить функции API для заказов |
 
@@ -188,6 +240,9 @@ source: Mapped[OrderSource] = mapped_column(
 - [ ] AC-8: Можно добавить несколько кальянов к одной брони
 - [ ] AC-9: Кальянщик видит предзаказы в панели (зависит от T-090)
 - [ ] AC-10: Mobile-first — корректное отображение на 320px+
+- [ ] AC-11: При выборе крепости загружаются рекомендации от кальянщика (если есть)
+- [ ] AC-12: Нажатие "Выбрать этот микс" предзаполняет TobaccoSelector позициями из рекомендации
+- [ ] AC-13: Strength хранится как int 1-10; в UI отображается как Лёгкий/Средний/Крепкий
 
 ## 10. Engineering Tickets / Тикеты
 
@@ -196,13 +251,14 @@ source: Mapped[OrderSource] = mapped_column(
 | T-050 | Enum OrderSource + поле source в HookahOrder + миграция | backend | T-030 | S |
 | T-051 | Pydantic-схемы заказа (OrderCreate, OrderPublic, OrderItem) | backend | T-050 | S |
 | T-052 | API: POST/GET /api/bookings/{id}/orders + фильтры tobaccos | backend | T-051, T-031 | M |
-| T-053 | Компонент HookahBuilder (StrengthSelector, TobaccoSelector, OrderPreview) | frontend | T-052 | L |
+| T-053 | Компонент HookahBuilder (StrengthSelector, MasterRecommendations, TobaccoSelector, OrderPreview) | frontend | T-052, T-055 | L |
 | T-054 | Интеграция HookahBuilder в Booking.tsx + экран успеха | frontend | T-053 | M |
+| T-055 | MasterRecommendation модель + миграция + CRUD API + публичный GET | backend | T-050, T-020 | M |
 
 ## 11. Open Questions / Открытые вопросы
 
-| # | Вопрос | Кто отвечает |
-|---|--------|--------------|
-| 1 | Максимальное количество кальянов на одну бронь? (предлагаю 5) | Владелец |
-| 2 | Нужна ли рекомендация табаков (популярные / новинки)? | Владелец |
-| 3 | Показывать ли цену кальяна (если да — нужно поле price в Tobacco)? | Владелец |
+| # | Вопрос | Статус |
+|---|--------|--------|
+| 1 | Максимальное количество кальянов на одну бронь? (предлагаю 5) | ⬜ Открыт |
+| 2 | ~~Нужна ли рекомендация табаков?~~ | ✅ Решено: добавлены рекомендации кальянщика (FR-050-01a, T-055) |
+| 3 | Показывать ли цену кальяна (если да — нужно поле price в Tobacco)? | ⬜ Открыт |
