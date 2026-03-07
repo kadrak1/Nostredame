@@ -21,7 +21,7 @@
 | T-064 | OrderStatus страница (прогресс-бар, WebSocket) | frontend | M | ⬜ Не начат | [T-060](features/PHASE-2-T060-qr-table-ordering.md) |
 | T-065 | Админ QR-страница + маршруты | frontend | S | ⬜ Не начат | [T-060](features/PHASE-2-T060-qr-table-ordering.md) |
 | T-070 | Bot skeleton: main.py, api_client.py, messages.py, docker-compose сервис | backend | M | ⬜ Не начат | [T-070](features/PHASE-2-T070-telegram-bot.md) |
-| T-071 | /start handler + главное меню + deep link парсинг | backend | S | ⬜ Не начат | [T-070](features/PHASE-2-T070-telegram-bot.md) |
+| T-071 | /start handler + главное меню | backend | S | ⬜ Не начат | [T-070](features/PHASE-2-T070-telegram-bot.md) |
 | T-072 | Booking ConversationHandler (7 шагов) + keyboards | backend | L | ⬜ Не начат | [T-070](features/PHASE-2-T070-telegram-bot.md) |
 | T-073 | Order ConversationHandler (5 шагов) + keyboards | backend | L | ⬜ Не начат | [T-070](features/PHASE-2-T070-telegram-bot.md) |
 | T-074 | /status + /cancel handlers | backend | S | ⬜ Не начат | [T-070](features/PHASE-2-T070-telegram-bot.md) |
@@ -167,22 +167,21 @@
 > **Спека**: [PHASE-2-T070-telegram-bot.md](features/PHASE-2-T070-telegram-bot.md)
 > **PRD**: R6 — Telegram-бот
 
-Telegram-бот с ConversationHandler для бронирования и заказа кальяна. Поддерживает deep links для QR-столов. Использует backend API через HTTP (не напрямую в БД).
+Telegram-бот с ConversationHandler для бронирования и заказа кальяна. Заказ из бота — через ручной ввод номера стола (QR-код ведёт на веб, не в бот). Использует backend API через HTTP (не напрямую в БД).
 
 ### T-070: ⬜ Bot skeleton: main.py, api_client.py, docker-compose
-**Тип**: backend · **Оценка**: M (~4 ч) · **Зависимости**: T-060, T-080
+**Тип**: backend · **Оценка**: M (~4 ч) · **Зависимости**: T-080
 - Структура: `backend/bot/handlers/`, `backend/bot/keyboards/`, `backend/bot/api_client.py`
 - `api_client.py` — обёртка над httpx для backend API
 - `messages.py` — шаблоны сообщений (русский текст)
 - Добавить сервис `bot` в `docker-compose.yml`
 - **AC**: Бот запускается, отвечает на `/start`
 
-### T-071: ⬜ /start handler + deep link парсинг
+### T-071: ⬜ /start handler + главное меню
 **Тип**: backend · **Оценка**: S (~2 ч) · **Зависимости**: T-070
 - `/start` — приветствие + главное меню (inline keyboard)
-- `/start table_{token}` — deep link с QR-кода, переход в OrderConversation
 - `/help` — список команд
-- **AC**: Deep link корректно определяет стол и начинает заказ
+- **AC**: `/start` открывает меню с кнопками «Забронировать», «Заказать кальян», «Мои брони»
 
 ### T-072: ⬜ Booking ConversationHandler (7 шагов)
 **Тип**: backend · **Оценка**: L (~8 ч) · **Зависимости**: T-070, T-071
@@ -192,12 +191,12 @@ Telegram-бот с ConversationHandler для бронирования и зак
 - Отмена в любой момент через /cancel
 - **AC**: Гость бронирует стол через 7 шагов, получает ID брони
 
-### T-073: ⬜ Order ConversationHandler (5 шагов)
+### T-073: ⬜ Order ConversationHandler (6 шагов)
 **Тип**: backend · **Оценка**: L (~8 ч) · **Зависимости**: T-070, T-071
-- Шаги: крепость → табаки → вес → комментарий → подтверждение
-- Переиспользование данных из deep link (table token)
+- Шаги: номер стола → крепость → табаки → вес → комментарий → подтверждение
+- Валидация стола через `GET /api/tables/{id}`
 - `POST /api/orders` через `api_client.py`
-- **AC**: Гость создаёт заказ через 5 шагов, получает public_id
+- **AC**: Гость создаёт заказ через 6 шагов, получает public_id
 
 ### T-074: ⬜ /status + /cancel handlers
 **Тип**: backend · **Оценка**: S (~2 ч) · **Зависимости**: T-072, T-073
@@ -232,8 +231,7 @@ Telegram-бот с ConversationHandler для бронирования и зак
 - Mock Telegram Bot API (python-telegram-bot test helpers)
 - Mock backend API через `respx`
 - Тест BookingConversation: полный флоу 7 шагов
-- Тест OrderConversation: полный флоу 5 шагов
-- Тест deep link: `/start table_{token}` → OrderConversation
+- Тест OrderConversation: полный флоу 6 шагов (с вводом номера стола)
 - **AC**: pytest проходит без реального подключения к Telegram
 
 ---
@@ -351,7 +349,7 @@ T-030 ──► T-050 ──► T-051 ──► T-052 ──► T-053 ──► 
 T-031 ──► T-055 ──────────────────────► T-053
                 └──────────────────────► T-095
 
-T-060, T-080 ──► T-070 ──► T-071 ──► T-072
+T-080 ──► T-070 ──► T-071 ──► T-072
                        ├──────────► T-073
                        └──────────► T-075 ──► T-076
 T-030 ──────────────► T-077
