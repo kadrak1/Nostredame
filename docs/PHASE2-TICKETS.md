@@ -11,8 +11,9 @@
 | T-050 | Enum OrderSource + поле source в HookahOrder + миграция | backend | S | ⬜ Не начат | [T-050](features/PHASE-2-T050-hookah-preorder.md) |
 | T-051 | Pydantic-схемы заказа (OrderCreate, OrderPublic, OrderItem) | backend | S | ⬜ Не начат | [T-050](features/PHASE-2-T050-hookah-preorder.md) |
 | T-052 | API: POST/GET /api/bookings/{id}/orders + фильтры tobaccos | backend | M | ⬜ Не начат | [T-050](features/PHASE-2-T050-hookah-preorder.md) |
-| T-053 | Компонент HookahBuilder (StrengthSelector, TobaccoSelector, OrderPreview) | frontend | L | ⬜ Не начат | [T-050](features/PHASE-2-T050-hookah-preorder.md) |
+| T-053 | Компонент HookahBuilder (StrengthSelector 1-10, TobaccoSelector, MasterRecommendations, OrderPreview) | frontend | L | ⬜ Не начат | [T-050](features/PHASE-2-T050-hookah-preorder.md) |
 | T-054 | Интеграция HookahBuilder в Booking.tsx + экран успеха | frontend | M | ⬜ Не начат | [T-050](features/PHASE-2-T050-hookah-preorder.md) |
+| T-055 | MasterRecommendation модель + миграция + CRUD API + публичный GET | backend | M | ⬜ Не начат | [T-050](features/PHASE-2-T050-hookah-preorder.md) |
 | T-060 | QR-генератор: сервис + API endpoint + массовая генерация | backend | M | ⬜ Не начат | [T-060](features/PHASE-2-T060-qr-table-ordering.md) |
 | T-061 | Orders API: POST /api/orders + public_id + rate limit | backend | M | ⬜ Не начат | [T-060](features/PHASE-2-T060-qr-table-ordering.md) |
 | T-062 | WebSocket manager + WS /ws/orders/{public_id} | backend | L | ⬜ Не начат | [T-060](features/PHASE-2-T060-qr-table-ordering.md) |
@@ -37,8 +38,9 @@
 | T-092 | MasterLayout + маршруты + auth guard | frontend | S | ⬜ Не начат | [T-090](features/PHASE-2-T090-hookah-master-panel.md) |
 | T-093 | OrderQueue страница + OrderCard компонент + WebSocket | frontend | L | ⬜ Не начат | [T-090](features/PHASE-2-T090-hookah-master-panel.md) |
 | T-094 | OrderHistory страница + звуковые уведомления (useOrderNotification) | frontend | M | ⬜ Не начат | [T-090](features/PHASE-2-T090-hookah-master-panel.md) |
+| T-095 | Recommendations страница + RecommendationForm в панели кальянщика | frontend | M | ⬜ Не начат | [T-090](features/PHASE-2-T090-hookah-master-panel.md) |
 
-**Прогресс**: 0 / 29 тикетов завершено (0%)
+**Прогресс**: 0 / 31 тикета завершено (0%)
 
 ---
 
@@ -74,14 +76,15 @@
 - **AC**: Предзаказ создаётся и привязывается к брони, появляется в ответе `/api/admin/bookings`
 
 ### T-053: ⬜ Компонент HookahBuilder
-**Тип**: frontend · **Оценка**: L (~8 ч) · **Зависимости**: T-052
-- `StrengthSelector.tsx` — переключатель крепости 1-5
-- `TobaccoSelector.tsx` — список с поиском и фильтром, чекбоксы
+**Тип**: frontend · **Оценка**: L (~8 ч) · **Зависимости**: T-052, T-055
+- `StrengthSelector.tsx` — переключатель крепости: «Лёгкий» (1-4) / «Средний» (5-7) / «Крепкий» (8-10), маппинг на шкалу 1-10
+- `MasterRecommendations.tsx` — блок «Рекомендует кальянщик»: активные рекомендации для выбранного strength_level (из GET /api/master/recommendations), кнопка «Выбрать этот микс» предзаполняет TobaccoSelector
+- `TobaccoSelector.tsx` — список с поиском и фильтром, чекбоксы, вес по умолчанию 20г (слайдер 5-40г)
 - `OrderPreview.tsx` — итоговый список выбранных табаков
 - `HookahBuilder.tsx` — контейнер, управление состоянием, отправка в API
 - Props: `bookingId`, `onComplete`, `onSkip`
 - Слот для `RepeatOrderButton` (авторизованный гость — T-100)
-- **AC**: Гость может выбрать 1-3 табака, просмотреть итог, отправить
+- **AC**: Гость может выбрать крепость, просмотреть рекомендации кальянщика, выбрать 1-3 табака (вес по умолчанию 20г), отправить заказ
 
 ### T-054: ⬜ Интеграция HookahBuilder в Booking.tsx
 **Тип**: frontend · **Оценка**: M (~4 ч) · **Зависимости**: T-053
@@ -89,6 +92,17 @@
 - Кнопка "Пропустить" возвращает на экран подтверждения
 - Экран успеха обновить: показывать детали предзаказа если он был сделан
 - **AC**: Флоу бронирования с кальяном работает сквозь 6 шагов
+
+### T-055: ⬜ MasterRecommendation модель + CRUD API + публичный GET
+**Тип**: backend · **Оценка**: M (~5 ч) · **Зависимости**: T-031, T-004
+- Модель `MasterRecommendation` в `backend/app/models/master_recommendation.py`:
+  - Поля: `id`, `venue_id` (FK venues), `name` (String(100)), `strength_level` (String(10): `"light"` | `"medium"` | `"strong"`), `items` (JSON: `[{tobacco_id, weight_grams}]`), `is_active` (bool, default True), `created_by` (FK users), `created_at`
+  - Маппинг strength_level: `"light"` → 1-4, `"medium"` → 5-7, `"strong"` → 8-10
+  - Ограничение: не более 10 активных рекомендаций на venue
+- Миграция Alembic
+- CRUD-эндпоинты (только `hookah_master | admin | owner`): `POST /api/master/recommendations`, `GET /api/master/recommendations`, `PUT /api/master/recommendations/{id}`, `DELETE /api/master/recommendations/{id}`
+- Публичный эндпоинт: `GET /api/master/recommendations?strength_level=light|medium|strong` — для HookahBuilder
+- **AC**: CRUD работает, публичный GET возвращает активные рекомендации для заданного strength_level
 
 ---
 
@@ -308,6 +322,14 @@ Telegram-бот с ConversationHandler для бронирования и зак
 - Настройка: включить/отключить звук
 - **AC**: При новом заказе звучит сигнал (если включён), история доступна за любую дату
 
+### T-095: ⬜ Recommendations страница + RecommendationForm в панели кальянщика
+**Тип**: frontend · **Оценка**: M (~5 ч) · **Зависимости**: T-055, T-092
+- `Recommendations.tsx` — страница `/master/recommendations`, список карточек рекомендаций (имя, strength_level, состав)
+- `RecommendationForm.tsx` — форма создания/редактирования рекомендации (имя, уровень крепости, список табаков с весом, переключатель is_active)
+- Отображение предупреждения при достижении лимита 10 активных рекомендаций
+- Маршрут `/master/recommendations` в MasterLayout
+- **AC**: Кальянщик создаёт, редактирует и деактивирует рекомендации; изменения сразу отражаются в HookahBuilder гостей
+
 ---
 
 ## Граф зависимостей Фазы 2
@@ -326,6 +348,9 @@ T-030 ──► T-050 ──► T-051 ──► T-052 ──► T-053 ──► 
                          └──► T-061 ──► T-062 ──► T-063
                                     └──────────► T-064
 
+T-031 ──► T-055 ──────────────────────► T-053
+                └──────────────────────► T-095
+
 T-060, T-080 ──► T-070 ──► T-071 ──► T-072
                        ├──────────► T-073
                        └──────────► T-075 ──► T-076
@@ -334,7 +359,8 @@ T-070..T-076 ──────► T-078
 
 T-050, T-060 ──► T-090 ──► (T-093)
 T-062 ──────────► T-091 ──► T-093
-T-011 ──────────► T-092 ──► T-093, T-094
+T-011 ──────────► T-092 ──► T-093, T-094, T-095
+T-055, T-092 ───────────► T-095
 ```
 
 ---
@@ -342,21 +368,23 @@ T-011 ──────────► T-092 ──► T-093, T-094
 ## Порядок реализации Фазы 2
 
 ```
-T-080 (гость-модель)                         [Sprint 1 начало]
+T-080 (гость-модель)                             [Sprint 1 начало]
 T-081 → T-082 → T-083 (гостевой вход)
 T-050 → T-051 → T-052 (предзаказ backend)
-T-053 → T-054 (HookahBuilder)               [Sprint 1 конец]
+T-055 (MasterRecommendation модель + API)
+T-053 → T-054 (HookahBuilder + рекомендации)    [Sprint 1 конец]
 
-T-060 → T-061 → T-062 (QR + заказы)         [Sprint 2 начало]
+T-060 → T-061 → T-062 (QR + заказы)             [Sprint 2 начало]
 T-063 → T-064 → T-065 (QR фронтенд)
-T-090 → T-091 → T-092 → T-093 → T-094      [Sprint 2 конец]
+T-090 → T-091 → T-092 → T-093 → T-094
+T-095 (Recommendations страница)                 [Sprint 2 конец]
 
-T-077 → T-070 → T-071 (бот skeleton)        [Sprint 3 начало]
+T-077 → T-070 → T-071 (бот skeleton)            [Sprint 3 начало]
 T-072 → T-073 → T-074 (бот handlers)
-T-075 → T-076 → T-078 (notifications)       [Sprint 3 конец]
+T-075 → T-076 → T-078 (notifications)           [Sprint 3 конец]
 ```
 
-**Итого: 29 тикетов для Фазы 2**
+**Итого: 31 тикет для Фазы 2**
 
 ---
 
@@ -368,4 +396,5 @@ T-075 → T-076 → T-078 (notifications)       [Sprint 3 конец]
 - [ ] Статус заказа обновляется в реальном времени через WebSocket
 - [ ] Telegram-бот позволяет бронировать и заказывать кальян
 - [ ] Кальянщик видит очередь заказов и управляет статусами
+- [ ] Кальянщик создаёт рекомендации миксов, гость видит их в HookahBuilder
 - [ ] При смене статуса гость получает уведомление в Telegram

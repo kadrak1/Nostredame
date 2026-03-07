@@ -164,7 +164,7 @@
 ### T-020: ✅ Модель данных — Tobacco
 **Тип**: backend
 **Описание**: ORM-модель табака
-- `Tobacco`: id, venue_id (FK), name, brand, strength (1-5 int), flavor_profile (JSON array: ["фруктовый", "мятный"]), in_stock (bool), weight_available_grams (int, nullable — для будущего учёта), created_at, updated_at
+- `Tobacco`: id, venue_id (FK), name, brand, strength (1-10 int), flavor_profile (JSON array: ["фруктовый", "мятный"]), in_stock (bool), weight_available_grams (int, nullable — для будущего учёта), created_at, updated_at
 - Alembic миграция
 - **AC**: Миграция применяется, модель работает
 
