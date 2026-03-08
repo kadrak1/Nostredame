@@ -17,6 +17,7 @@ import app.models.guest  # noqa: F401
 import app.models.booking  # noqa: F401
 import app.models.order  # noqa: F401
 import app.models.audit_log  # noqa: F401
+import app.models.master_recommendation  # noqa: F401
 
 config = context.config
 

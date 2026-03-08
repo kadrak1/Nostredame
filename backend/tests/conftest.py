@@ -17,6 +17,7 @@ from app.models.tobacco import Tobacco
 from app.models.user import User
 from app.models.booking import Booking
 from app.models.guest import Guest
+from app.models.master_recommendation import MasterRecommendation
 from app.services.security import (
     create_access_token,
     create_refresh_token,
@@ -298,3 +299,21 @@ async def booking(db_session: AsyncSession, venue: Venue, table: Table) -> Booki
     await db_session.flush()
     await db_session.refresh(b)
     return b
+
+
+@pytest_asyncio.fixture
+async def master_recommendation(
+    db_session: AsyncSession, venue: Venue, tobacco: Tobacco, hookah_master: User
+) -> MasterRecommendation:
+    """Create a test master recommendation."""
+    rec = MasterRecommendation(
+        venue_id=venue.id,
+        created_by=hookah_master.id,
+        name="Лёгкий цитрус",
+        strength_level="light",
+        items=[{"tobacco_id": tobacco.id, "weight_grams": 20.0}],
+    )
+    db_session.add(rec)
+    await db_session.flush()
+    await db_session.refresh(rec)
+    return rec
