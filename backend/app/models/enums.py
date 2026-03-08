@@ -27,3 +27,9 @@ class OrderStatus(str, enum.Enum):
 class TableShape(str, enum.Enum):
     rect = "rect"
     circle = "circle"
+
+
+class OrderSource(str, enum.Enum):
+    booking_preorder = "booking_preorder"
+    qr_table = "qr_table"
+    telegram = "telegram"

@@ -15,13 +15,13 @@ from sqlalchemy import (
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
-from app.models.enums import OrderStatus
+from app.models.enums import OrderSource, OrderStatus
 
 
 class HookahOrder(Base):
     __tablename__ = "hookah_orders"
     __table_args__ = (
-        CheckConstraint("strength >= 1 AND strength <= 5", name="strength_range"),
+        CheckConstraint("strength >= 1 AND strength <= 10", name="strength_range"),
     )
 
     id: Mapped[int] = mapped_column(primary_key=True)
@@ -38,6 +38,11 @@ class HookahOrder(Base):
     notes: Mapped[str] = mapped_column(Text, default="")
     status: Mapped[OrderStatus] = mapped_column(
         SAEnum(OrderStatus), default=OrderStatus.pending
+    )
+    source: Mapped[OrderSource] = mapped_column(
+        SAEnum(OrderSource),
+        default=OrderSource.booking_preorder,
+        server_default=OrderSource.booking_preorder.value,
     )
     created_at: Mapped[datetime] = mapped_column(
         DateTime, server_default=func.now()
