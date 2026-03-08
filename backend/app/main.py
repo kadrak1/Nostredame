@@ -13,7 +13,7 @@ from app.database import engine
 from app.limiter import limiter
 from app.logging_config import setup_logging
 from app.middleware.logging_middleware import RequestLoggingMiddleware
-from app.routers import auth, bookings, health, tables, tobaccos, venue
+from app.routers import auth, bookings, guest, health, tables, tobaccos, venue
 
 # ---------------------------------------------------------------------------
 # Logging — configure structlog before any logger is used
@@ -83,3 +83,4 @@ app.include_router(venue.router, prefix="/api")
 app.include_router(tables.router, prefix="/api")
 app.include_router(tobaccos.router, prefix="/api")
 app.include_router(bookings.router, prefix="/api")
+app.include_router(guest.router, prefix="/api")

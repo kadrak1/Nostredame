@@ -1,6 +1,7 @@
 """Pydantic schemas for guest authentication and profile endpoints."""
 
 import re
+from datetime import date
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -23,3 +24,16 @@ class GuestLoginResponse(BaseModel):
     guest_id: int
     name: str
     is_new: bool
+
+
+class GuestProfile(BaseModel):
+    id: int
+    name: str
+    phone_masked: str
+    first_visit: date
+    total_bookings: int
+    total_orders: int
+
+
+class GuestUpdate(BaseModel):
+    name: str = Field(..., min_length=1, max_length=100)
