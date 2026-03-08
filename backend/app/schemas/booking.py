@@ -5,17 +5,7 @@ from datetime import date, datetime, time
 from pydantic import BaseModel, Field, field_validator
 
 from app.models.enums import BookingStatus
-
-
-# ---------------------------------------------------------------------------
-# Shared validators
-# ---------------------------------------------------------------------------
-
-def _validate_phone(v: str) -> str:
-    digits = "".join(c for c in v if c.isdigit())
-    if len(digits) < 10 or len(digits) > 15:
-        raise ValueError("Номер телефона должен содержать 10–15 цифр")
-    return v.strip()
+from app.schemas.validators import validate_phone as _validate_phone
 
 
 # ---------------------------------------------------------------------------

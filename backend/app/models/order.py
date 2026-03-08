@@ -67,3 +67,4 @@ class OrderItem(Base):
     weight_grams: Mapped[float] = mapped_column(Float, default=15.0)
 
     order = relationship("HookahOrder", back_populates="items")
+    tobacco = relationship("Tobacco")
