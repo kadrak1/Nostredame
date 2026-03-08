@@ -34,8 +34,10 @@ AdminOrOwner = Annotated[
 @router.get("/public", response_model=list[TobaccoPublic])
 async def list_tobaccos_public(
     db: Annotated[AsyncSession, Depends(get_db)],
+    strength_min: Annotated[int | None, Query(ge=1, le=10)] = None,
+    strength_max: Annotated[int | None, Query(ge=1, le=10)] = None,
 ) -> list[TobaccoPublic]:
-    """Public — only in-stock active tobaccos for guest-facing catalog."""
+    """Public — in-stock active tobaccos. Optional strength_min/strength_max filter (1–10)."""
     venue = await get_first_venue(db)
     stmt = (
         select(Tobacco)
@@ -46,6 +48,15 @@ async def list_tobaccos_public(
         )
         .order_by(Tobacco.name)
     )
+    if strength_min is not None and strength_max is not None and strength_min > strength_max:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="strength_min не может быть больше strength_max",
+        )
+    if strength_min is not None:
+        stmt = stmt.where(Tobacco.strength >= strength_min)
+    if strength_max is not None:
+        stmt = stmt.where(Tobacco.strength <= strength_max)
     result = await db.execute(stmt)
     return [TobaccoPublic.model_validate(t) for t in result.scalars().all()]
 

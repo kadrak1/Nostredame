@@ -65,6 +65,13 @@ class OrderCreate(BaseModel):
     def check_phone(cls, v: str) -> str:
         return validate_phone(v)
 
+    @model_validator(mode="after")
+    def check_unique_tobaccos(self) -> "OrderCreate":
+        ids = [item.tobacco_id for item in self.items]
+        if len(ids) != len(set(ids)):
+            raise ValueError("В заказе не должно быть дублирующихся табаков")
+        return self
+
 
 class OrderPublic(BaseModel):
     """Response for guest-facing order endpoints."""

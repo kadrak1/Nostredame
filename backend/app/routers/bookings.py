@@ -6,16 +6,19 @@ from typing import Annotated
 
 import structlog
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import joinedload
 
 from app.database import get_db
 from app.dependencies import CurrentUser, require_role
 from app.limiter import limiter
 from app.models.booking import Booking
-from app.models.enums import BookingStatus, UserRole
+from app.models.enums import BookingStatus, OrderSource, UserRole
 from app.models.guest import Guest
+from app.models.order import HookahOrder, OrderItem
 from app.models.table import Table
+from app.models.tobacco import Tobacco
 from app.schemas.booking import (
     AvailableTableItem,
     BookingAdmin,
@@ -23,6 +26,7 @@ from app.schemas.booking import (
     BookingPublic,
     PhoneVerify,
 )
+from app.schemas.order import OrderCreate, OrderPublic
 from app.services.audit import log_action
 from app.services.security import decrypt_phone, encrypt_phone, hash_phone, mask_phone
 from app.services.venue_helpers import ensure_venue_id, get_first_venue
@@ -308,6 +312,153 @@ async def cancel_booking(
     )
 
     return BookingPublic.model_validate(booking)
+
+
+# ---------------------------------------------------------------------------
+# Public: hookah preorders for a booking
+# ---------------------------------------------------------------------------
+
+_MAX_ORDERS_PER_BOOKING = 5
+
+
+async def _verify_booking_phone(
+    db: AsyncSession, booking: Booking, guest_phone: str
+) -> None:
+    """Raise 403 if guest_phone does not match the booking owner."""
+    guest_stmt = select(Guest).where(Guest.id == booking.guest_id)
+    guest = (await db.execute(guest_stmt)).scalar_one_or_none()
+    if guest is None or not hmac_mod.compare_digest(
+        guest.phone_hash, hash_phone(guest_phone)
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Номер телефона не совпадает",
+        )
+
+
+async def _load_order_with_items(db: AsyncSession, order_id: int) -> HookahOrder:
+    """Reload a HookahOrder with items + tobacco eagerly loaded."""
+    stmt = (
+        select(HookahOrder)
+        .options(joinedload(HookahOrder.items).joinedload(OrderItem.tobacco))
+        .where(HookahOrder.id == order_id)
+    )
+    return (await db.execute(stmt)).unique().scalar_one()
+
+
+@router.post(
+    "/bookings/{booking_id}/orders",
+    response_model=OrderPublic,
+    status_code=status.HTTP_201_CREATED,
+)
+@limiter.limit("10/hour")
+async def create_booking_order(
+    request: Request,
+    booking_id: int,
+    body: OrderCreate,
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> OrderPublic:
+    """Create a hookah preorder for an existing booking. Rate-limited: 10/hour per IP."""
+    # 1. Fetch booking
+    booking_stmt = select(Booking).where(Booking.id == booking_id)
+    booking = (await db.execute(booking_stmt)).scalar_one_or_none()
+    if booking is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Бронь не найдена")
+
+    # 2. Booking must be active
+    if booking.status in (BookingStatus.cancelled, BookingStatus.completed):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"Нельзя добавить заказ к брони со статусом '{booking.status.value}'",
+        )
+
+    # 3. Verify phone ownership
+    await _verify_booking_phone(db, booking, body.guest_phone)
+
+    # 4. Enforce max orders per booking
+    count_stmt = select(func.count()).where(HookahOrder.booking_id == booking_id)
+    existing_count = (await db.execute(count_stmt)).scalar_one()
+    if existing_count >= _MAX_ORDERS_PER_BOOKING:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"К одной брони можно добавить не более {_MAX_ORDERS_PER_BOOKING} кальянов",
+        )
+
+    # 5. Validate tobaccos (in stock, belong to venue)
+    tobacco_ids = [item.tobacco_id for item in body.items]
+    tobacco_stmt = select(Tobacco).where(
+        Tobacco.id.in_(tobacco_ids),
+        Tobacco.venue_id == booking.venue_id,
+        Tobacco.is_active.is_(True),
+    )
+    tobaccos = {t.id: t for t in (await db.execute(tobacco_stmt)).scalars().all()}
+
+    for item in body.items:
+        t = tobaccos.get(item.tobacco_id)
+        if t is None:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Табак id={item.tobacco_id} не найден",
+            )
+        if not t.in_stock:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Табак '{t.name}' не в наличии",
+            )
+
+    # 6. Create order
+    order = HookahOrder(
+        venue_id=booking.venue_id,
+        booking_id=booking.id,
+        table_id=booking.table_id,
+        guest_id=booking.guest_id,
+        strength=body.strength,
+        notes=body.notes,
+        source=OrderSource.booking_preorder,
+    )
+    db.add(order)
+    await db.flush()
+
+    # 7. Create items
+    for item in body.items:
+        db.add(OrderItem(
+            order_id=order.id,
+            tobacco_id=item.tobacco_id,
+            weight_grams=item.weight_grams,
+        ))
+    await db.flush()
+
+    logger.info("hookah_order_created", order_id=order.id, booking_id=booking_id)
+
+    # 8. Reload with relationships for response
+    order = await _load_order_with_items(db, order.id)
+    return OrderPublic.model_validate(order)
+
+
+@router.get("/bookings/{booking_id}/orders", response_model=list[OrderPublic])
+@limiter.limit("30/minute")
+async def list_booking_orders(
+    request: Request,
+    booking_id: int,
+    guest_phone: Annotated[str, Query(description="Phone matching the booking")],
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> list[OrderPublic]:
+    """List hookah preorders for a booking. Phone verification required."""
+    booking_stmt = select(Booking).where(Booking.id == booking_id)
+    booking = (await db.execute(booking_stmt)).scalar_one_or_none()
+    if booking is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Бронь не найдена")
+
+    await _verify_booking_phone(db, booking, guest_phone)
+
+    stmt = (
+        select(HookahOrder)
+        .options(joinedload(HookahOrder.items).joinedload(OrderItem.tobacco))
+        .where(HookahOrder.booking_id == booking_id)
+        .order_by(HookahOrder.created_at)
+    )
+    orders = (await db.execute(stmt)).unique().scalars().all()
+    return [OrderPublic.model_validate(o) for o in orders]
 
 
 # ---------------------------------------------------------------------------
