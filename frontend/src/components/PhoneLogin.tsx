@@ -19,8 +19,7 @@ export default function PhoneLogin({ onSuccess }: PhoneLoginProps) {
     setPhone('+7' + digits);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleLogin = async () => {
     setError('');
 
     const digits = phone.replace(/\D/g, '');
@@ -50,7 +49,7 @@ export default function PhoneLogin({ onSuccess }: PhoneLoginProps) {
           {error}
         </div>
       )}
-      <form className="guest-login-row" onSubmit={handleSubmit}>
+      <div className="guest-login-row">
         <input
           type="tel"
           value={phone}
@@ -58,15 +57,17 @@ export default function PhoneLogin({ onSuccess }: PhoneLoginProps) {
           placeholder="+7XXXXXXXXXX"
           maxLength={12}
           autoComplete="tel"
+          onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleLogin(); } }}
         />
         <button
-          type="submit"
+          type="button"
           className="btn btn-primary guest-login-btn"
           disabled={isLoading || phone.length < 12}
+          onClick={handleLogin}
         >
           {isLoading ? '...' : 'Войти'}
         </button>
-      </form>
+      </div>
     </div>
   );
 }
