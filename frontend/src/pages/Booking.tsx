@@ -460,15 +460,8 @@ function Step3({
   const [phone, setPhone] = useState(data.guest_phone);
   const [notes, setNotes] = useState(data.notes);
   const [error, setError] = useState('');
-  // One-time auto-fill from restored guest session (cookie on mount)
-  const autoFilledRef = useRef(false);
-
-  useEffect(() => {
-    if (guest && !autoFilledRef.current) {
-      autoFilledRef.current = true;
-      setName((prev) => prev || guest.name);
-    }
-  }, [guest]);
+  // Derive effective name from user input or restored guest session — no effect needed
+  const effectiveName = name || guest?.name || '';
 
   const handleLoginSuccess = (guestName: string, guestPhone: string) => {
     setName(guestName);
@@ -485,11 +478,11 @@ function Step3({
       setError('Введите корректный номер телефона (10–15 цифр)');
       return;
     }
-    if (name.trim().length < 2) {
+    if (effectiveName.trim().length < 2) {
       setError('Введите ваше имя');
       return;
     }
-    onNext({ guest_name: name.trim(), guest_phone: phone.trim(), notes: notes.trim() });
+    onNext({ guest_name: effectiveName.trim(), guest_phone: phone.trim(), notes: notes.trim() });
   };
 
   return (
@@ -520,7 +513,7 @@ function Step3({
           type="text"
           autoComplete="name"
           placeholder="Иван Петров"
-          value={name}
+          value={effectiveName}
           onChange={(e) => setName(e.target.value)}
           maxLength={100}
           required
