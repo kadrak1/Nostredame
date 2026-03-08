@@ -46,6 +46,14 @@ def create_refresh_token(data: dict) -> str:
     return pyjwt.encode(to_encode, settings.jwt_secret_key, algorithm=JWT_ALGORITHM)
 
 
+def create_guest_token(data: dict) -> str:
+    """Create a guest JWT with 7-day TTL."""
+    to_encode = data.copy()
+    expire = datetime.now(timezone.utc) + timedelta(days=7)
+    to_encode.update({"exp": expire, "type": "guest"})
+    return pyjwt.encode(to_encode, settings.jwt_secret_key, algorithm=JWT_ALGORITHM)
+
+
 def decode_token(token: str, expected_type: str = "access") -> dict | None:
     """Decode and validate a JWT token. Returns payload or None."""
     try:

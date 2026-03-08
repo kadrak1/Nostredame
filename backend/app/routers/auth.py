@@ -1,23 +1,31 @@
-"""Authentication router — login, refresh, me."""
+"""Authentication router — login, refresh, me, guest auth."""
 
+from datetime import datetime, timezone
 from typing import Annotated
 
 import structlog
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
 from app.database import get_db
 from app.dependencies import CurrentUser
+from app.limiter import limiter
+from app.models.guest import Guest
 from app.models.user import User
 from app.schemas.auth import LoginRequest, TokenResponse, UserResponse
+from app.schemas.guest import GuestLogin, GuestLoginResponse
 from app.services.audit import log_action
 from app.services.brute_force import login_guard
 from app.services.security import (
     create_access_token,
+    create_guest_token,
     create_refresh_token,
     decode_token,
+    encrypt_phone,
+    hash_phone,
     verify_password,
 )
 from app.utils import get_client_ip
@@ -196,3 +204,89 @@ async def logout(
     logger.info("logout", user_id=user.id)
     await log_action(db, "logout", user_id=user.id)
     return {"detail": "ok"}
+
+
+# ---------------------------------------------------------------------------
+# Guest auth
+# ---------------------------------------------------------------------------
+
+_GUEST_TOKEN_TTL = 7 * 24 * 3600  # 7 days in seconds
+
+
+@router.post("/guest", response_model=GuestLoginResponse, status_code=status.HTTP_200_OK)
+@limiter.limit("10/minute")
+async def guest_login(
+    body: GuestLogin,
+    request: Request,
+    response: Response,
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> GuestLoginResponse:
+    """Authenticate or register a guest by phone number.
+
+    Returns 200 for existing guests, 201 for new ones (status code set via response).
+    Sets httpOnly cookie ``guest_token`` with 7-day TTL.
+    """
+    ip = get_client_ip(request)
+
+    if login_guard.is_blocked(ip, body.phone):
+        remaining = login_guard.remaining_block_seconds(ip, body.phone)
+        logger.warning("guest_login_blocked", remaining_s=remaining)
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail=f"Слишком много попыток. Попробуйте через {remaining // 60 + 1} мин.",
+        )
+
+    phone_hash = hash_phone(body.phone)
+    result = await db.execute(select(Guest).where(Guest.phone_hash == phone_hash))
+    guest = result.scalar_one_or_none()
+
+    is_new = guest is None
+    if is_new:
+        guest = Guest(
+            phone_hash=phone_hash,
+            phone_encrypted=encrypt_phone(body.phone),
+        )
+        db.add(guest)
+        try:
+            await db.flush()  # populate guest.id; raises IntegrityError on duplicate
+        except IntegrityError:
+            await db.rollback()
+            # Concurrent request already created the guest — fetch it
+            result = await db.execute(select(Guest).where(Guest.phone_hash == phone_hash))
+            guest = result.scalar_one()
+            is_new = False
+
+        if is_new:
+            response.status_code = status.HTTP_201_CREATED
+
+    guest.last_login_at = datetime.now(timezone.utc)
+    guest.login_count += 1
+
+    await log_action(
+        db,
+        "guest_login",
+        details=f"phone_hash={phone_hash} is_new={is_new}",
+        ip_address=ip,
+    )
+    await db.commit()
+    await db.refresh(guest)
+
+    login_guard.record_success(ip, body.phone)
+
+    token = create_guest_token({"sub": str(guest.id), "role": "guest"})
+    response.set_cookie(
+        key="guest_token",
+        value=token,
+        max_age=_GUEST_TOKEN_TTL,
+        **_COOKIE_KWARGS,
+    )
+
+    logger.info("guest_login", guest_id=guest.id, is_new=is_new)
+    return GuestLoginResponse(guest_id=guest.id, name=guest.name, is_new=is_new)
+
+
+@router.post("/guest/logout")
+async def guest_logout(response: Response) -> dict:
+    """Clear the guest_token cookie."""
+    response.delete_cookie("guest_token", path="/")
+    return {"ok": True}
