@@ -11,6 +11,8 @@ import { Stage, Layer, Rect, Circle, Text, Line } from 'react-konva';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import api from '../api/client';
+import { useGuest } from '../guest-auth';
+import PhoneLogin from '../components/PhoneLogin';
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                               */
@@ -453,20 +455,29 @@ function Step3({
   isSubmitting: boolean;
   submitError: string;
 }) {
+  const { guest, logout } = useGuest();
   const [name, setName] = useState(data.guest_name);
   const [phone, setPhone] = useState(data.guest_phone);
   const [notes, setNotes] = useState(data.notes);
   const [error, setError] = useState('');
-  const submittingRef = useRef(false);  // HIGH-2: double-submit guard
+  // One-time auto-fill from restored guest session (cookie on mount)
+  const autoFilledRef = useRef(false);
 
-  // HIGH-2: reset guard on server error so user can retry
   useEffect(() => {
-    if (submitError) submittingRef.current = false;
-  }, [submitError]);
+    if (guest && !autoFilledRef.current) {
+      autoFilledRef.current = true;
+      setName((prev) => prev || guest.name);
+    }
+  }, [guest]);
+
+  const handleLoginSuccess = (guestName: string, guestPhone: string) => {
+    setName(guestName);
+    setPhone(guestPhone);
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (submittingRef.current) return;  // HIGH-2: block concurrent submits
+    if (isSubmitting) return;  // rely on isPending as source of truth
     setError('');
 
     const digits = phone.replace(/\D/g, '');
@@ -478,13 +489,28 @@ function Step3({
       setError('Введите ваше имя');
       return;
     }
-    submittingRef.current = true;
     onNext({ guest_name: name.trim(), guest_phone: phone.trim(), notes: notes.trim() });
   };
 
   return (
     <form className="bk-card" onSubmit={handleSubmit}>
       <h2 className="bk-card-title">Ваши данные</h2>
+
+      {/* Guest auth block */}
+      {guest ? (
+        <div className="guest-banner">
+          <span>Вы вошли как <strong>{guest.name}</strong> ({guest.phone_masked})</span>
+          <button
+            type="button"
+            className="guest-banner-logout"
+            onClick={() => { logout(); setName(''); setPhone(''); }}
+          >
+            Выйти
+          </button>
+        </div>
+      ) : (
+        <PhoneLogin onSuccess={handleLoginSuccess} />
+      )}
 
       {(error || submitError) && <div className="error">{error || submitError}</div>}
 
@@ -665,11 +691,12 @@ export default function Booking() {
     setStep(1);
   }, []);
 
+  const { mutate: doCreateBooking } = createMutation;
   const handleStep3 = useCallback(
     (data: Step3Data) => {
       setStep3Data(data);
       setSubmitError('');
-      createMutation.mutate({
+      doCreateBooking({
         table_id: selectedTableId,
         date: step1Data.date,
         time_from: step1Data.time_from + ':00',
@@ -680,7 +707,7 @@ export default function Booking() {
         notes: data.notes,
       });
     },
-    [selectedTableId, step1Data, createMutation]
+    [selectedTableId, step1Data, doCreateBooking]
   );
 
   const tableNumber =
