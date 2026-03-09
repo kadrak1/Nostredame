@@ -21,9 +21,8 @@ def generate_qr_png(url: str, size: int = 300) -> bytes:
         PNG-encoded bytes ready to be served as ``image/png``.
     """
     # box_size: pixels per individual QR module.
-    # A typical auto-version code with border=4 is ~(version*4+17 + 8) modules wide.
-    # Version-1 → 29 cells; version-3 → 37 cells.
-    # box_size = size // 33 is a good heuristic for URLs up to ~50 chars.
+    # QR module count = version*4+17 (e.g. v1→21, v3→29); border=4 adds 8 quiet modules.
+    # Effective width ≈ version*4+25; divisor 33 is a good heuristic for URLs up to ~50 chars.
     box_size = max(4, size // 33)
 
     qr = qrcode.QRCode(
