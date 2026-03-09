@@ -8,7 +8,7 @@ import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import api from '../../api/client';
 import type { StrengthLevel } from './StrengthSelector';
-import { STRENGTH_RANGE } from './StrengthSelector';
+import { STRENGTH_RANGE } from './strengthConfig';
 
 export const DEFAULT_WEIGHT = 25; // фиксированный вес для API — кальянщик решает соотношение
 export const MAX_TOBACCOS = 3;
