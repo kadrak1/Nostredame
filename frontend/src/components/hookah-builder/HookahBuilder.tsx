@@ -69,9 +69,11 @@ export default function HookahBuilder({
   }, []);
 
   // Apply a master recommendation mix — clear current selection, let TobaccoSelector resolve IDs
-  const handleApplyMix = useCallback((items: OrderItem[]) => {
+  // Accept any object with tobacco_id (RecommendationItem from MasterRecommendations),
+  // then convert to OrderItem by injecting the fixed DEFAULT_WEIGHT.
+  const handleApplyMix = useCallback((items: { tobacco_id: number }[]) => {
     setSelected(new Map());
-    setPendingMix(items);
+    setPendingMix(items.map((i) => ({ tobacco_id: i.tobacco_id, weight_grams: DEFAULT_WEIGHT })));
   }, []);
 
   // TobaccoSelector resolved pendingMix → SelectedItem entries
