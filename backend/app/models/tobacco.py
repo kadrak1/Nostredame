@@ -20,7 +20,7 @@ from app.database import Base
 class Tobacco(Base):
     __tablename__ = "tobaccos"
     __table_args__ = (
-        CheckConstraint("strength >= 1 AND strength <= 5", name="strength_range"),
+        CheckConstraint("strength >= 1 AND strength <= 10", name="strength_range"),
     )
 
     id: Mapped[int] = mapped_column(primary_key=True)

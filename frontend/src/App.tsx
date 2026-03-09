@@ -4,6 +4,7 @@ import { AuthProvider, PrivateRoute } from './auth';
 import { GuestAuthProvider } from './guest-auth';
 import Home from './pages/Home';
 import Booking from './pages/Booking';
+import HookahBuilderTest from './pages/HookahBuilderTest';
 import AdminLogin from './pages/admin/Login';
 import AdminLayout from './layouts/AdminLayout';
 import AdminDashboard from './pages/admin/Dashboard';
@@ -31,6 +32,7 @@ function App() {
             {/* Guest pages */}
             <Route path="/" element={<Home />} />
             <Route path="/booking" element={<Booking />} />
+            <Route path="/hookah-test" element={<HookahBuilderTest />} />
 
             {/* Admin — login is public */}
             <Route path="/admin/login" element={<AdminLogin />} />

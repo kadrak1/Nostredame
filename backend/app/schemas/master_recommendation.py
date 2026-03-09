@@ -55,3 +55,21 @@ class MasterRecommendationPublic(BaseModel):
     created_at: datetime
 
     model_config = {"from_attributes": True}
+
+
+class RecommendationItemPublic(BaseModel):
+    """Item enriched with tobacco name and flavors — for guest-facing endpoint."""
+
+    tobacco_id: int
+    tobacco_name: str
+    flavor_profile: list[str]
+
+
+class MasterRecommendationEnriched(BaseModel):
+    """Recommendation with full tobacco info — returned by public GET."""
+
+    id: int
+    name: str
+    strength_level: StrengthLevel
+    items: list[RecommendationItemPublic]
+    created_at: datetime

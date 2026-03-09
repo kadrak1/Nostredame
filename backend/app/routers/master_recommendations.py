@@ -13,8 +13,10 @@ from app.models.master_recommendation import MasterRecommendation
 from app.models.tobacco import Tobacco
 from app.schemas.master_recommendation import (
     MasterRecommendationCreate,
+    MasterRecommendationEnriched,
     MasterRecommendationPublic,
     MasterRecommendationUpdate,
+    RecommendationItemPublic,
     StrengthLevel,
 )
 from app.services.venue_helpers import ensure_venue_id, get_first_venue
@@ -34,12 +36,12 @@ _MAX_ACTIVE_PER_VENUE = 10
 # ---------------------------------------------------------------------------
 
 
-@router.get("/master/recommendations", response_model=list[MasterRecommendationPublic])
+@router.get("/master/recommendations", response_model=list[MasterRecommendationEnriched])
 async def list_recommendations_public(
     db: Annotated[AsyncSession, Depends(get_db)],
     strength_level: Annotated[StrengthLevel | None, Query()] = None,
-) -> list[MasterRecommendationPublic]:
-    """Public — active recommendations, optionally filtered by strength_level."""
+) -> list[MasterRecommendationEnriched]:
+    """Public — active recommendations with tobacco names and flavors."""
     venue = await get_first_venue(db)
     stmt = select(MasterRecommendation).where(
         MasterRecommendation.venue_id == venue.id,
@@ -49,7 +51,35 @@ async def list_recommendations_public(
         stmt = stmt.where(MasterRecommendation.strength_level == strength_level)
     stmt = stmt.order_by(MasterRecommendation.created_at.desc())
     result = await db.execute(stmt)
-    return [MasterRecommendationPublic.model_validate(r) for r in result.scalars().all()]
+    recs = result.scalars().all()
+
+    # Load tobacco data for all items in one query
+    all_ids = {item["tobacco_id"] for rec in recs for item in rec.items}
+    tmap: dict[int, Tobacco] = {}
+    if all_ids:
+        t_result = await db.execute(select(Tobacco).where(Tobacco.id.in_(all_ids)))
+        tmap = {t.id: t for t in t_result.scalars()}
+
+    # Build enriched response
+    return [
+        MasterRecommendationEnriched(
+            id=rec.id,
+            name=rec.name,
+            strength_level=rec.strength_level,
+            created_at=rec.created_at,
+            items=[
+                RecommendationItemPublic(
+                    tobacco_id=it["tobacco_id"],
+                    tobacco_name=tmap[it["tobacco_id"]].name if it["tobacco_id"] in tmap else "?",
+                    flavor_profile=tmap[it["tobacco_id"]].flavor_profile or []
+                    if it["tobacco_id"] in tmap
+                    else [],
+                )
+                for it in rec.items
+            ],
+        )
+        for rec in recs
+    ]
 
 
 # ---------------------------------------------------------------------------
