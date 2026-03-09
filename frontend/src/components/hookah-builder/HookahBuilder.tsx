@@ -55,18 +55,8 @@ export default function HookahBuilder({
       if (next.has(tobacco.id)) {
         next.delete(tobacco.id);
       } else {
-        next.set(tobacco.id, { tobacco, weight: DEFAULT_WEIGHT });
+        next.set(tobacco.id, { tobacco });
       }
-      return next;
-    });
-  }, []);
-
-  const handleWeightChange = useCallback((tobaccoId: number, weight: number) => {
-    setSelected((prev) => {
-      const item = prev.get(tobaccoId);
-      if (!item) return prev;
-      const next = new Map(prev);
-      next.set(tobaccoId, { ...item, weight });
       return next;
     });
   }, []);
@@ -113,7 +103,7 @@ export default function HookahBuilder({
       guest_phone: guestPhone,
       items: selectedItems.map((i) => ({
         tobacco_id: i.tobacco.id,
-        weight_grams: i.weight,
+        weight_grams: DEFAULT_WEIGHT,
       })),
     });
   };
@@ -139,7 +129,6 @@ export default function HookahBuilder({
         strengthLevel={strength}
         selected={selected}
         onToggle={handleToggle}
-        onWeightChange={handleWeightChange}
         pendingMix={pendingMix}
         onMixApplied={handleMixApplied}
       />

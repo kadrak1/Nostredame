@@ -70,7 +70,7 @@ async def list_tobaccos_public(
 async def list_tobaccos(
     db: Annotated[AsyncSession, Depends(get_db)],
     user: AdminOrOwner,
-    strength: Annotated[int | None, Query(ge=1, le=5)] = None,
+    strength: Annotated[int | None, Query(ge=1, le=10)] = None,
     in_stock: bool | None = None,
     brand: str | None = None,
     flavor: str | None = None,

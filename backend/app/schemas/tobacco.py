@@ -12,7 +12,7 @@ class TobaccoCreate(BaseModel):
 
     name: str = Field(..., min_length=1, max_length=200, description="Tobacco name")
     brand: str = Field(..., min_length=1, max_length=100, description="Brand name")
-    strength: int = Field(..., ge=1, le=5, description="Strength level 1-5")
+    strength: int = Field(..., ge=1, le=10, description="Strength level 1-10")
     flavor_profile: list[str] | None = Field(
         None, description='Flavor tags, e.g. ["fruity", "mint"]'
     )
@@ -27,7 +27,7 @@ class TobaccoUpdate(BaseModel):
 
     name: str | None = Field(None, min_length=1, max_length=200)
     brand: str | None = Field(None, min_length=1, max_length=100)
-    strength: int | None = Field(None, ge=1, le=5)
+    strength: int | None = Field(None, ge=1, le=10)
     flavor_profile: list[str] | None = None
     in_stock: bool | None = None
     weight_available_grams: int | None = Field(None, ge=0)

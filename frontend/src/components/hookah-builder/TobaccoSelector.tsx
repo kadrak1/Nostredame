@@ -1,10 +1,7 @@
 /**
- * TobaccoSelector — список табаков с поиском, чекбоксами и слайдером веса.
+ * TobaccoSelector — список табаков с поиском и чекбоксами.
  * Загружает GET /api/tobaccos/public?strength_min=X&strength_max=Y.
- * Максимум 3 табака одновременно.
- *
- * Когда pendingMix передан, при загрузке табаков компонент резолвит
- * tobacco_id → TobaccoData и вызывает onMixApplied с готовой Map.
+ * Максимум 3 табака. Граммовка фиксирована — кальянщик решает сам.
  */
 
 import { useState, useEffect } from 'react';
@@ -13,9 +10,7 @@ import api from '../../api/client';
 import type { StrengthLevel } from './StrengthSelector';
 import { STRENGTH_RANGE } from './StrengthSelector';
 
-export const DEFAULT_WEIGHT = 20;
-export const MIN_WEIGHT = 5;
-export const MAX_WEIGHT = 40;
+export const DEFAULT_WEIGHT = 25; // фиксированный вес для API — кальянщик решает соотношение
 export const MAX_TOBACCOS = 3;
 
 export interface TobaccoData {
@@ -29,7 +24,6 @@ export interface TobaccoData {
 
 export interface SelectedItem {
   tobacco: TobaccoData;
-  weight: number;
 }
 
 interface PendingMixItem {
@@ -41,8 +35,6 @@ interface TobaccoSelectorProps {
   strengthLevel: StrengthLevel | null;
   selected: Map<number, SelectedItem>;
   onToggle: (tobacco: TobaccoData) => void;
-  onWeightChange: (tobaccoId: number, weight: number) => void;
-  /** Если задан — при следующей загрузке табаков применить этот микс */
   pendingMix: PendingMixItem[] | null;
   onMixApplied: (items: Map<number, SelectedItem>) => void;
 }
@@ -51,7 +43,6 @@ export default function TobaccoSelector({
   strengthLevel,
   selected,
   onToggle,
-  onWeightChange,
   pendingMix,
   onMixApplied,
 }: TobaccoSelectorProps) {
@@ -71,23 +62,15 @@ export default function TobaccoSelector({
     enabled: strengthLevel !== null,
   });
 
-  // Resolve pendingMix into SelectedItem entries when tobaccos are loaded
   useEffect(() => {
     if (!pendingMix || tobaccos.length === 0) return;
-
     const byId = new Map(tobaccos.map((t) => [t.id, t]));
     const resolved = new Map<number, SelectedItem>();
-
-    for (const { tobacco_id, weight_grams } of pendingMix) {
+    for (const { tobacco_id } of pendingMix) {
       const tobacco = byId.get(tobacco_id);
-      if (tobacco) {
-        resolved.set(tobacco_id, { tobacco, weight: weight_grams });
-      }
+      if (tobacco) resolved.set(tobacco_id, { tobacco });
     }
-
-    // Take at most MAX_TOBACCOS entries (mix may contain more than available locally)
-    const limited = new Map(Array.from(resolved.entries()).slice(0, MAX_TOBACCOS));
-    onMixApplied(limited);
+    onMixApplied(new Map(Array.from(resolved.entries()).slice(0, MAX_TOBACCOS)));
   }, [pendingMix, tobaccos, onMixApplied]);
 
   const filtered = tobaccos.filter((t) => {
@@ -101,14 +84,8 @@ export default function TobaccoSelector({
   if (!strengthLevel) {
     return <p className="info-muted hb-tobacco-hint">Сначала выберите крепость</p>;
   }
-
-  if (isLoading) {
-    return <p className="info-muted">Загрузка табаков...</p>;
-  }
-
-  if (isError) {
-    return <p className="error">Не удалось загрузить табаки. Попробуйте обновить страницу.</p>;
-  }
+  if (isLoading) return <p className="info-muted">Загрузка табаков...</p>;
+  if (isError) return <p className="error">Не удалось загрузить табаки. Попробуйте обновить страницу.</p>;
 
   return (
     <div className="hb-tobacco-selector">
@@ -126,16 +103,12 @@ export default function TobaccoSelector({
         />
       </div>
 
-      {filtered.length === 0 && (
-        <p className="info-muted">Ничего не найдено</p>
-      )}
+      {filtered.length === 0 && <p className="info-muted">Ничего не найдено</p>}
 
       <div className="hb-tobacco-list">
         {filtered.map((tobacco) => {
           const isSelected = selected.has(tobacco.id);
-          const item = selected.get(tobacco.id);
           const disabled = !isSelected && reachedMax;
-
           return (
             <div
               key={tobacco.id}
@@ -161,22 +134,6 @@ export default function TobaccoSelector({
                 </div>
                 <span className="tc-strength">{tobacco.strength}</span>
               </label>
-
-              {isSelected && (
-                <div className="hb-weight-row">
-                  <span className="hb-weight-label">Вес: {item!.weight}г</span>
-                  <input
-                    type="range"
-                    min={MIN_WEIGHT}
-                    max={MAX_WEIGHT}
-                    step={5}
-                    value={item!.weight}
-                    onChange={(e) => onWeightChange(tobacco.id, Number(e.target.value))}
-                    className="hb-weight-slider"
-                  />
-                  <span className="hb-weight-limits">{MIN_WEIGHT}–{MAX_WEIGHT}г</span>
-                </div>
-              )}
             </div>
           );
         })}

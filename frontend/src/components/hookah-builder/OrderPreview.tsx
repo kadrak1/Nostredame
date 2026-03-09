@@ -13,8 +13,6 @@ export default function OrderPreview({ items }: OrderPreviewProps) {
     return null;
   }
 
-  const totalWeight = items.reduce((sum, i) => sum + i.weight, 0);
-
   return (
     <div className="hb-preview">
       <p className="hb-section-label">Ваш заказ</p>
@@ -25,12 +23,11 @@ export default function OrderPreview({ items }: OrderPreviewProps) {
               {item.tobacco.name}
               <span className="hb-preview-brand"> — {item.tobacco.brand}</span>
             </span>
-            <span className="hb-preview-weight">{item.weight}г</span>
           </li>
         ))}
       </ul>
       <div className="hb-preview-total">
-        Итого: {items.length} {items.length === 1 ? 'табак' : 'табака'} · {totalWeight}г
+        Итого: {items.length} {items.length === 1 ? 'табак' : 'табака'}
       </div>
     </div>
   );
