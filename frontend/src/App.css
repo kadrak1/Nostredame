@@ -1373,3 +1373,404 @@ textarea:focus {
     width: 100%;
   }
 }
+
+
+/* ================================================================
+   HookahBuilder  (.hb-*)
+   ================================================================ */
+
+.hb-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.hb-header {
+  text-align: center;
+}
+
+.hb-title {
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin-bottom: 0.4rem;
+}
+
+.hb-subtitle {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+/* --- Section label --- */
+.hb-section-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.75rem;
+}
+
+/* --- StrengthSelector --- */
+.hb-strength-selector {
+  background-color: var(--bg-card);
+  border-radius: var(--radius);
+  padding: 1.25rem;
+}
+
+.hb-strength-buttons {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+}
+
+.hb-strength-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.85rem 0.5rem;
+  background-color: var(--bg-input);
+  border: 2px solid #2a3a5c;
+  border-radius: var(--radius);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 0.9rem;
+}
+
+.hb-strength-btn:hover {
+  border-color: #3a4a6c;
+  color: var(--text-primary);
+}
+
+.hb-strength-btn.active {
+  background-color: rgba(233, 69, 96, 0.08);
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.hb-strength-name {
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.hb-strength-range {
+  font-size: 0.75rem;
+  color: inherit;
+  opacity: 0.7;
+}
+
+/* --- MasterRecommendations --- */
+.hb-rec-block {
+  background-color: var(--bg-card);
+  border-radius: var(--radius);
+  padding: 1.25rem;
+  border-left: 3px solid var(--accent);
+}
+
+.hb-rec-loading {
+  padding: 0.5rem 0;
+}
+
+.hb-rec-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.hb-rec-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  background-color: var(--bg-input);
+  border-radius: var(--radius);
+  padding: 0.75rem 1rem;
+}
+
+.hb-rec-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.hb-rec-name {
+  font-weight: 600;
+  font-size: 0.95rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hb-rec-items {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.hb-rec-apply-btn {
+  padding: 7px 14px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  background-color: rgba(233, 69, 96, 0.12);
+  color: var(--accent);
+  border: 1px solid rgba(233, 69, 96, 0.3);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.hb-rec-apply-btn:hover {
+  background-color: rgba(233, 69, 96, 0.22);
+}
+
+/* --- TobaccoSelector --- */
+.hb-tobacco-selector {
+  background-color: var(--bg-card);
+  border-radius: var(--radius);
+  padding: 1.25rem;
+}
+
+.hb-tobacco-hint {
+  padding: 0.5rem 0;
+}
+
+.hb-tobacco-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-bottom: 0.75rem;
+}
+
+.hb-tobacco-counter {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.hb-tobacco-search {
+  display: block;
+  width: 100%;
+  padding: 8px 12px;
+  background-color: var(--bg-input);
+  border: 1px solid #2a3a5c;
+  border-radius: var(--radius);
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  margin-top: 0;
+}
+
+.hb-tobacco-search:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.hb-tobacco-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-height: 380px;
+  overflow-y: auto;
+}
+
+.hb-tobacco-item {
+  background-color: var(--bg-input);
+  border-radius: var(--radius);
+  border: 1px solid transparent;
+  padding: 0.75rem;
+  transition: border-color 0.15s;
+}
+
+.hb-tobacco-item.selected {
+  border-color: var(--accent);
+}
+
+.hb-tobacco-item.disabled {
+  opacity: 0.45;
+}
+
+.hb-tobacco-checkbox-label {
+  display: flex !important;
+  align-items: flex-start;
+  gap: 0.75rem;
+  cursor: pointer;
+  margin-bottom: 0 !important;
+}
+
+.hb-tobacco-checkbox-label input[type="checkbox"] {
+  width: auto;
+  margin: 3px 0 0;
+  flex-shrink: 0;
+  accent-color: var(--accent);
+}
+
+.hb-tobacco-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.hb-tobacco-name {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.hb-tobacco-brand {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.hb-tobacco-flavors {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 0.25rem;
+}
+
+/* --- Weight slider --- */
+.hb-weight-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.6rem;
+  padding-left: 1.75rem;
+}
+
+.hb-weight-label {
+  font-size: 0.85rem;
+  color: var(--accent);
+  font-weight: 600;
+  white-space: nowrap;
+  min-width: 60px;
+}
+
+.hb-weight-slider {
+  flex: 1;
+  display: block !important;
+  width: auto !important;
+  height: 4px;
+  background: #2a3a5c;
+  border: none !important;
+  border-radius: 2px;
+  outline: none;
+  accent-color: var(--accent);
+  cursor: pointer;
+  padding: 0 !important;
+  margin-top: 0 !important;
+}
+
+.hb-weight-limits {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.hb-max-hint {
+  margin-top: 0.75rem;
+  font-size: 0.82rem;
+}
+
+/* --- OrderPreview --- */
+.hb-preview {
+  background-color: var(--bg-card);
+  border-radius: var(--radius);
+  padding: 1.25rem;
+  border: 1px solid rgba(46, 204, 113, 0.2);
+}
+
+.hb-preview-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-bottom: 0.75rem;
+}
+
+.hb-preview-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.9rem;
+  padding: 0.3rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.hb-preview-item:last-child {
+  border-bottom: none;
+}
+
+.hb-preview-tobacco {
+  font-weight: 500;
+}
+
+.hb-preview-brand {
+  font-weight: 400;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.hb-preview-weight {
+  font-size: 0.85rem;
+  color: var(--success);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.hb-preview-total {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  text-align: right;
+}
+
+/* --- Actions row --- */
+.hb-actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.hb-skip-btn {
+  flex: 1;
+}
+
+.hb-submit-btn {
+  flex: 2;
+}
+
+/* --- RepeatOrder slot --- */
+.hb-repeat-slot {
+  margin-bottom: 0.25rem;
+}
+
+/* --- Mobile --- */
+@media (max-width: 600px) {
+  .hb-strength-buttons {
+    gap: 0.5rem;
+  }
+
+  .hb-strength-btn {
+    padding: 0.65rem 0.25rem;
+    font-size: 0.85rem;
+  }
+
+  .hb-tobacco-list {
+    max-height: 300px;
+  }
+
+  .hb-weight-row {
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+
+  .hb-actions {
+    flex-direction: column-reverse;
+  }
+
+  .hb-skip-btn,
+  .hb-submit-btn {
+    flex: none;
+    width: 100%;
+  }
+}
