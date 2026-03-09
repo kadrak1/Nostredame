@@ -32,3 +32,6 @@ structlog==24.4.0
 
 # Telegram bot
 python-telegram-bot==21.9
+
+# QR code generation
+qrcode[pil]==8.2

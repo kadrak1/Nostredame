@@ -144,7 +144,7 @@ class TestTobaccosCRUD:
         resp = await admin_client.post("/api/tobaccos", json={
             "name": "Bad",
             "brand": "Bad",
-            "strength": 6,  # Max is 5
+            "strength": 11,  # Max is 10 (T-053 changed scale to 1-10)
         })
         assert resp.status_code == 422
 

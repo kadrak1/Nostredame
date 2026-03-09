@@ -1,12 +1,16 @@
 """Tables & Floor Plan router — CRUD for tables + floor plan management."""
 
+import io
+import zipfile
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi.responses import Response
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.config import settings
 from app.database import get_db
 from app.dependencies import CurrentUser, require_role
 from app.models.enums import UserRole
@@ -19,6 +23,7 @@ from app.schemas.table import (
     TableResponse,
     TableUpdate,
 )
+from app.services.qr_generator import generate_qr_png
 from app.services.venue_helpers import (
     ensure_venue_id,
     get_active_tables,
@@ -164,3 +169,67 @@ async def delete_table(
     table = await get_table_or_404(db, table_id, venue_id)
     table.is_active = False
     await db.flush()
+
+
+# ---------------------------------------------------------------------------
+# QR code generation (admin/owner only)
+# ---------------------------------------------------------------------------
+
+
+@router.get("/tables/qr-all")
+async def get_all_qr_codes(
+    db: Annotated[AsyncSession, Depends(get_db)],
+    user: AdminOrOwner,
+    size: Annotated[int, Query(ge=100, le=2000)] = 300,
+) -> Response:
+    """Download a ZIP archive containing QR-code PNGs for all active tables.
+
+    Each file is named ``table_{number}.png``.
+    Owner/admin only.
+    """
+    venue_id = ensure_venue_id(user)
+    stmt = (
+        select(Table)
+        .where(Table.venue_id == venue_id, Table.is_active.is_(True))
+        .order_by(Table.number)
+    )
+    tables = (await db.execute(stmt)).scalars().all()
+
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
+        for table in tables:
+            url = f"https://{settings.domain}/table/{table.id}"
+            zf.writestr(f"table_{table.number}.png", generate_qr_png(url, size))
+
+    return Response(
+        content=buf.getvalue(),
+        media_type="application/zip",
+        headers={"Content-Disposition": 'attachment; filename="qr-codes.zip"'},
+    )
+
+
+@router.get("/tables/{table_id}/qr")
+async def get_table_qr(
+    table_id: int,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    user: AdminOrOwner,
+    size: Annotated[int, Query(ge=100, le=2000)] = 300,
+) -> Response:
+    """Download a QR-code PNG for a specific table.
+
+    The QR encodes ``https://{domain}/table/{table_id}``.
+    Owner/admin only.
+    """
+    venue_id = ensure_venue_id(user)
+    table = await get_table_or_404(db, table_id, venue_id)
+
+    url = f"https://{settings.domain}/table/{table.id}"
+    png_bytes = generate_qr_png(url, size)
+
+    return Response(
+        content=png_bytes,
+        media_type="image/png",
+        headers={
+            "Content-Disposition": f'inline; filename="table_{table.number}.png"'
+        },
+    )
