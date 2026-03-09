@@ -10,7 +10,8 @@ import type { StrengthLevel } from './StrengthSelector';
 
 interface RecommendationItem {
   tobacco_id: number;
-  weight_grams: number;
+  tobacco_name: string;
+  flavor_profile: string[];
 }
 
 interface Recommendation {
@@ -59,6 +60,16 @@ export default function MasterRecommendations({ strengthLevel, onApplyMix }: Mas
               <span className="hb-rec-items">
                 {rec.items.length} {rec.items.length === 1 ? 'табак' : rec.items.length < 5 ? 'табака' : 'табаков'}
               </span>
+              {(() => {
+                const tags = [...new Set(rec.items.flatMap((i) => i.flavor_profile))];
+                return tags.length > 0 ? (
+                  <div className="hb-rec-flavors">
+                    {tags.map((f) => (
+                      <span key={f} className="tc-tag">{f}</span>
+                    ))}
+                  </div>
+                ) : null;
+              })()}
             </div>
             <button
               type="button"
