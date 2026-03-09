@@ -13,6 +13,7 @@ import { Link } from 'react-router-dom';
 import api from '../api/client';
 import { useGuest } from '../guest-auth';
 import PhoneLogin from '../components/PhoneLogin';
+import HookahBuilder from '../components/hookah-builder/HookahBuilder';
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                               */
@@ -563,10 +564,14 @@ function Step4({
   booking,
   step1,
   tableNumber,
+  onAddHookah,
+  hookahOrderCount = 0,
 }: {
   booking: BookingResult;
   step1: Step1Data;
   tableNumber: number;
+  onAddHookah?: () => void;
+  hookahOrderCount?: number;
 }) {
   const statusLabels: Record<string, string> = {
     pending: 'Ожидает подтверждения',
@@ -626,7 +631,24 @@ function Step4({
         Сохраните номер брони <strong>#{booking.id}</strong> — он потребуется для отмены.
       </p>
 
-      <Link to="/" className="btn btn-primary bk-next-btn">
+      {onAddHookah && (
+        <div className="bk-hookah-upsell">
+          {hookahOrderCount > 0 && (
+            <p className="bk-hookah-count">
+              Кальянов в предзаказе: <strong>{hookahOrderCount}</strong>
+            </p>
+          )}
+          <button
+            type="button"
+            className="btn btn-primary bk-next-btn"
+            onClick={onAddHookah}
+          >
+            {hookahOrderCount > 0 ? 'Добавить ещё кальян' : 'Предзаказать кальян'}
+          </button>
+        </div>
+      )}
+
+      <Link to="/" className={`btn bk-next-btn ${onAddHookah ? 'fp-btn-secondary' : 'btn-primary'}`}>
         На главную
       </Link>
     </div>
@@ -654,6 +676,8 @@ export default function Booking() {
   });
   const [submitError, setSubmitError] = useState('');
   const [bookingResult, setBookingResult] = useState<BookingResult | null>(null);
+  const [hookahPhase, setHookahPhase] = useState<'idle' | 'building'>('idle');
+  const [hookahCount, setHookahCount] = useState(0);
 
   // All tables for resolving table number in confirmation
   const { data: floorData } = useQuery({
@@ -749,11 +773,22 @@ export default function Booking() {
           <p className="info-muted">Загрузка...</p>
         )}
 
-        {step === 3 && bookingResult && (
+        {step === 3 && bookingResult && hookahPhase === 'idle' && (
           <Step4
             booking={bookingResult}
             step1={step1Data}
             tableNumber={tableNumber}
+            onAddHookah={() => setHookahPhase('building')}
+            hookahOrderCount={hookahCount}
+          />
+        )}
+
+        {step === 3 && bookingResult && hookahPhase === 'building' && (
+          <HookahBuilder
+            bookingId={bookingResult.id}
+            guestPhone={step3Data.guest_phone}
+            onComplete={() => { setHookahCount((c) => c + 1); setHookahPhase('idle'); }}
+            onSkip={() => setHookahPhase('idle')}
           />
         )}
       </div>
