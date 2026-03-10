@@ -1,4 +1,4 @@
-"""Public orders router — QR-table order creation and status (T-061)."""
+"""Public orders router — QR-table order creation and status (T-061/T-062)."""
 
 import uuid as uuid_lib
 from typing import Annotated
@@ -21,6 +21,7 @@ from app.schemas.order import (
     OrderStatusItemPublic,
     OrderStatusPublic,
 )
+from app.services.ws_manager import ws_manager
 from app.utils import get_client_ip
 
 logger = structlog.get_logger(__name__)
@@ -134,8 +135,24 @@ async def create_qr_order(
         table_number=table.number,
     )
 
-    # public_id is always set above — assert to satisfy type checker
+    # Commit before broadcast so master clients can immediately query the new order
+    # without hitting a "not found" race condition (T-062 code review HIGH #2).
+    # get_db will call commit() again on exit — that's a no-op for an already-clean session.
     assert order.public_id is not None
+    await db.commit()
+
+    # Broadcast new order event to all master connections for this venue (T-062)
+    await ws_manager.broadcast_to_master(
+        table.venue_id,
+        {
+            "type": "order.new",
+            "order_id": order.id,
+            "public_id": order.public_id,
+            "table_number": table.number,
+            "strength": order.strength,
+            "status": order.status.value,
+        },
+    )
     return OrderQRPublic(
         id=order.id,
         public_id=order.public_id,
