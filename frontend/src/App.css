@@ -2071,3 +2071,54 @@ textarea:focus {
   border-top: 1px solid rgba(255, 255, 255, 0.05);
   padding-top: 0.75rem;
 }
+
+/* ================================================================
+   QR-коды (T-065) — /admin/qr-codes
+   ================================================================ */
+
+/* Table number badge */
+.qr-table-num {
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+/* URL hint in the table cell */
+.qr-url-hint {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  font-family: monospace;
+}
+
+/* Compact download button in the actions column */
+.qr-btn-dl {
+  padding: 6px 12px;
+  font-size: 0.85rem;
+}
+
+/* Preview modal — wider than the default tc-modal */
+.qr-preview-modal {
+  max-width: 420px;
+  text-align: center;
+}
+
+/* Wrapper centers the QR image and adds breathing room */
+.qr-preview-img-wrap {
+  display: flex;
+  justify-content: center;
+  padding: 1.25rem 0;
+}
+
+/* The QR image itself */
+.qr-preview-img {
+  width: 300px;
+  height: 300px;
+  image-rendering: pixelated; /* keep QR modules crisp */
+  border-radius: 4px;
+  background: #fff; /* white background if PNG has transparency */
+}
+
+/* Hint below the QR image */
+.qr-preview-hint {
+  font-size: 0.8rem;
+  margin-bottom: 0.5rem;
+}

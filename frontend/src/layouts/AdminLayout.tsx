@@ -7,6 +7,7 @@ const NAV_ITEMS = [
   { to: '/admin/floor-plan', label: 'Конструктор зала', icon: '🗺️' },
   { to: '/admin/tobaccos', label: 'Каталог табаков', icon: '🌿' },
   { to: '/admin/bookings', label: 'Бронирования', icon: '📅' },
+  { to: '/admin/qr-codes', label: 'QR-коды', icon: '📱' },
 ];
 
 export default function AdminLayout() {
