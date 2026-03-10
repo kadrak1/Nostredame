@@ -53,6 +53,14 @@ export function useOrderWebSocket(publicId: string | undefined): OrderWebSocketS
   /** Флаг «не переподключаться» — terminal статус или анмаунт */
   const stopRef = useRef(false);
 
+  /**
+   * Ref, указывающий на актуальную функцию connect. Используется внутри
+   * ws.onclose, чтобы избежать прямой ссылки на `connect` до завершения
+   * её объявления (иначе ESLint no-use-before-define выдаёт ошибку).
+   * Обновляется в useEffect ниже каждый раз, когда connect пересоздаётся.
+   */
+  const connectRef = useRef<() => void>(() => undefined);
+
   const connect = useCallback(() => {
     if (!publicId || stopRef.current) return;
 
@@ -102,11 +110,9 @@ export function useOrderWebSocket(publicId: string | undefined): OrderWebSocketS
       // 4004 = order not found; terminal = no more updates expected
       if (stopRef.current || event.code === 4004) return;
 
-      // Exponential backoff reconnect.
-      // Note: `connect` is captured by closure from useCallback at the time this
-      // WebSocket was created. Because publicId never changes while the component
-      // is mounted (route params are stable), this closure is always fresh.
-      // If publicId could change without remounting, use a connectRef instead.
+      // Exponential backoff reconnect via connectRef to avoid a direct
+      // self-reference inside useCallback that ESLint flags as
+      // no-use-before-define (connect closure capturing itself).
       const backoff = Math.min(
         INITIAL_BACKOFF_MS * Math.pow(2, retryCountRef.current),
         MAX_BACKOFF_MS,
@@ -114,10 +120,16 @@ export function useOrderWebSocket(publicId: string | undefined): OrderWebSocketS
       retryCountRef.current += 1;
       retryTimerRef.current = setTimeout(() => {
         retryTimerRef.current = null;
-        connect();
+        connectRef.current();
       }, backoff);
     };
-  }, [publicId]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [publicId]);
+
+  // Keep connectRef pointing at the latest connect instance so that the
+  // onclose timer callback always calls the freshest version.
+  useEffect(() => {
+    connectRef.current = connect;
+  }, [connect]);
 
   useEffect(() => {
     // Note: In React StrictMode (dev), effects run twice (mount → cleanup → mount).
