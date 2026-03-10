@@ -1774,3 +1774,174 @@ textarea:focus {
     width: 100%;
   }
 }
+
+/* ================================================================
+   TableLanding  (.tl-*)  — QR table landing page (T-063)
+   ================================================================ */
+
+.tl-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem;
+  background-color: var(--bg-primary);
+}
+
+.tl-loading,
+.tl-error {
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.tl-error h2 {
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+}
+
+.tl-card {
+  background-color: var(--bg-card);
+  border-radius: calc(var(--radius) * 2);
+  padding: 2.5rem 2rem;
+  max-width: 400px;
+  width: 100%;
+  text-align: center;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+.tl-venue-name {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--accent);
+  margin-bottom: 1.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.tl-table-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.tl-table-label {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 0.25rem;
+}
+
+.tl-table-number {
+  font-size: 3.5rem;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--text-primary);
+}
+
+.tl-hint {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  margin-bottom: 2rem;
+  line-height: 1.5;
+}
+
+.tl-order-btn {
+  width: 100%;
+  padding: 14px;
+  font-size: 1rem;
+}
+
+/* ================================================================
+   OrderStatus  (.os-*)  — QR order status page (T-064 stub)
+   ================================================================ */
+
+.os-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 3rem 1rem;
+  background-color: var(--bg-primary);
+}
+
+.os-loading,
+.os-error {
+  text-align: center;
+  color: var(--text-muted);
+  padding-top: 4rem;
+}
+
+.os-error h2 {
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+}
+
+.os-card {
+  background-color: var(--bg-card);
+  border-radius: calc(var(--radius) * 2);
+  padding: 2rem;
+  max-width: 480px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.os-title {
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.os-status-badge {
+  background-color: rgba(233, 69, 96, 0.12);
+  color: var(--text-primary);
+  font-size: 1.1rem;
+  font-weight: 600;
+  padding: 0.75rem 1.25rem;
+  border-radius: var(--radius);
+  border: 1px solid rgba(233, 69, 96, 0.3);
+  text-align: center;
+}
+
+.os-meta {
+  display: flex;
+  gap: 1.5rem;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.os-items {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.os-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.95rem;
+  padding: 0.4rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.os-item:last-child {
+  border-bottom: none;
+}
+
+.os-item-weight {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.os-hint {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  padding-top: 0.75rem;
+}

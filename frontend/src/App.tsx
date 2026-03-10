@@ -5,6 +5,9 @@ import { GuestAuthProvider } from './guest-auth';
 import Home from './pages/Home';
 import Booking from './pages/Booking';
 import HookahBuilderTest from './pages/HookahBuilderTest';
+import TableLanding from './pages/TableLanding';
+import TableOrder from './pages/TableOrder';
+import OrderStatus from './pages/OrderStatus';
 import AdminLogin from './pages/admin/Login';
 import AdminLayout from './layouts/AdminLayout';
 import AdminDashboard from './pages/admin/Dashboard';
@@ -33,6 +36,11 @@ function App() {
             <Route path="/" element={<Home />} />
             <Route path="/booking" element={<Booking />} />
             <Route path="/hookah-test" element={<HookahBuilderTest />} />
+
+            {/* QR-table flow (T-063) */}
+            <Route path="/table/:tableId" element={<TableLanding />} />
+            <Route path="/table/:tableId/order" element={<TableOrder />} />
+            <Route path="/order/:publicId" element={<OrderStatus />} />
 
             {/* Admin — login is public */}
             <Route path="/admin/login" element={<AdminLogin />} />

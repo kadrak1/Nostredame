@@ -15,10 +15,12 @@ from app.database import get_db
 from app.dependencies import CurrentUser, require_role
 from app.models.enums import UserRole
 from app.models.table import Table
+from app.models.venue import Venue
 from app.schemas.table import (
     FloorPlanResponse,
     FloorPlanUpdate,
     TableCreate,
+    TableInfoPublic,
     TablePublic,
     TableResponse,
     TableUpdate,
@@ -169,6 +171,41 @@ async def delete_table(
     table = await get_table_or_404(db, table_id, venue_id)
     table.is_active = False
     await db.flush()
+
+
+# ---------------------------------------------------------------------------
+# Public table info — for QR landing page (T-063)
+# ---------------------------------------------------------------------------
+
+
+@router.get("/tables/{table_id}/info", response_model=TableInfoPublic)
+async def get_table_info(
+    table_id: int,
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> TableInfoPublic:
+    """Return minimal public table info for the QR-landing page.
+
+    Public endpoint — no auth required.
+    Returns 404 if the table doesn't exist or is inactive.
+    """
+    table = await db.get(Table, table_id)
+    if not table or not table.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Стол не найден или неактивен",
+        )
+    venue = await db.get(Venue, table.venue_id)
+    if venue is None:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Данные заведения повреждены",
+        )
+    return TableInfoPublic(
+        id=table.id,
+        number=table.number,
+        venue_id=table.venue_id,
+        venue_name=venue.name,
+    )
 
 
 # ---------------------------------------------------------------------------

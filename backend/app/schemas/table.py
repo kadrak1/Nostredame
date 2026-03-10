@@ -66,6 +66,17 @@ class TablePublic(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class TableInfoPublic(BaseModel):
+    """Minimal public table info for the QR-landing page (T-063)."""
+
+    id: int
+    number: int
+    venue_id: int
+    venue_name: str
+
+    model_config = {"from_attributes": True}
+
+
 class FloorPlanResponse(BaseModel):
     """Full floor plan: venue metadata + tables + optional decorations."""
 
