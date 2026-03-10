@@ -1,5 +1,6 @@
 """Hookah order models — orders and their tobacco items."""
 
+import uuid as uuid_lib
 from datetime import datetime
 
 from sqlalchemy import (
@@ -25,6 +26,12 @@ class HookahOrder(Base):
     )
 
     id: Mapped[int] = mapped_column(primary_key=True)
+    # public_id — UUID4 string; used for public status URL (/orders/{public_id}/status).
+    # Nullable to stay compatible with rows created before T-061 migration.
+    public_id: Mapped[str | None] = mapped_column(
+        Text, unique=True, index=True, nullable=True,
+        default=lambda: str(uuid_lib.uuid4()),
+    )
     venue_id: Mapped[int] = mapped_column(ForeignKey("venues.id"), index=True)
     booking_id: Mapped[int | None] = mapped_column(
         ForeignKey("bookings.id"), nullable=True, index=True
@@ -33,6 +40,7 @@ class HookahOrder(Base):
     guest_id: Mapped[int | None] = mapped_column(
         ForeignKey("guests.id"), nullable=True, index=True
     )
+    guest_name: Mapped[str | None] = mapped_column(Text, nullable=True)
     strength: Mapped[int] = mapped_column(Integer)
     prep_time_minutes: Mapped[int | None] = mapped_column(Integer, nullable=True)
     notes: Mapped[str] = mapped_column(Text, default="")

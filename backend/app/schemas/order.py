@@ -87,3 +87,56 @@ class OrderPublic(BaseModel):
     created_at: datetime
 
     model_config = {"from_attributes": True}
+
+
+# ---------------------------------------------------------------------------
+# QR-table order (T-061)
+# ---------------------------------------------------------------------------
+
+class OrderQRCreate(BaseModel):
+    """Payload for POST /api/orders (QR table scan, anonymous)."""
+
+    table_id: int
+    guest_name: str | None = Field(None, max_length=100, description="Optional guest name for identification")
+    strength: int = Field(..., ge=1, le=10, description="Hookah strength 1–10")
+    notes: str = Field("", max_length=200)
+    items: list[OrderItemCreate] = Field(..., min_length=1, max_length=3)
+
+    @model_validator(mode="after")
+    def check_unique_tobaccos(self) -> "OrderQRCreate":
+        ids = [item.tobacco_id for item in self.items]
+        if len(ids) != len(set(ids)):
+            raise ValueError("В заказе не должно быть дублирующихся табаков")
+        return self
+
+
+class OrderQRPublic(BaseModel):
+    """Response after creating a QR-table order."""
+
+    id: int
+    public_id: str
+    table_id: int
+    status: OrderStatus
+    source: OrderSource
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class OrderStatusItemPublic(BaseModel):
+    """Tobacco item in the order status response."""
+
+    tobacco_name: str
+    weight_grams: float
+
+
+class OrderStatusPublic(BaseModel):
+    """Response for GET /api/orders/{public_id}/status."""
+
+    public_id: str
+    status: OrderStatus
+    table_number: int
+    strength: int
+    items: list[OrderStatusItemPublic]
+    created_at: datetime
+    updated_at: datetime
