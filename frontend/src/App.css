@@ -1854,7 +1854,7 @@ textarea:focus {
 }
 
 /* ================================================================
-   OrderStatus  (.os-*)  — QR order status page (T-064 stub)
+   OrderStatus  (.os-*)  — QR order status page (T-064)
    ================================================================ */
 
 .os-page {
@@ -1889,21 +1889,36 @@ textarea:focus {
   gap: 1.25rem;
 }
 
+/* Header row: title + WS dot */
+.os-header {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
 .os-title {
   font-size: 1.4rem;
   font-weight: 700;
   margin: 0;
+  flex: 1;
 }
 
-.os-status-badge {
-  background-color: rgba(233, 69, 96, 0.12);
-  color: var(--text-primary);
-  font-size: 1.1rem;
-  font-weight: 600;
-  padding: 0.75rem 1.25rem;
-  border-radius: var(--radius);
-  border: 1px solid rgba(233, 69, 96, 0.3);
-  text-align: center;
+/* WS connection indicator dot */
+.os-ws-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: var(--text-muted);
+  opacity: 0.4;
+  flex-shrink: 0;
+  transition: background-color 0.3s, opacity 0.3s;
+}
+
+.os-ws-dot.connected {
+  background-color: #4caf82;
+  opacity: 1;
+  box-shadow: 0 0 6px rgba(76, 175, 130, 0.6);
 }
 
 .os-meta {
@@ -1912,6 +1927,117 @@ textarea:focus {
   color: var(--text-muted);
   font-size: 0.9rem;
 }
+
+/* ── Progress stepper ─────────────────────────────── */
+
+.os-stepper {
+  display: flex;
+  align-items: flex-start;
+  gap: 0;
+  padding: 0.5rem 0;
+}
+
+.os-step-wrapper {
+  display: flex;
+  align-items: center;
+  flex: 1;
+}
+
+.os-step-wrapper:first-child {
+  flex: 0 0 auto;
+}
+
+/* Connector line between steps */
+.os-connector {
+  flex: 1;
+  height: 2px;
+  background-color: rgba(255, 255, 255, 0.1);
+  margin: 0 4px;
+  margin-bottom: 20px; /* align with circle center */
+  transition: background-color 0.3s;
+}
+
+.os-connector.filled {
+  background-color: var(--accent);
+}
+
+.os-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  flex-shrink: 0;
+}
+
+.os-step-circle {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  font-weight: 700;
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  background-color: var(--bg-secondary);
+  color: var(--text-muted);
+  transition: background-color 0.3s, border-color 0.3s, color 0.3s;
+}
+
+.os-step-label {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  text-align: center;
+  line-height: 1.2;
+  white-space: nowrap;
+  transition: color 0.3s;
+}
+
+/* Done step */
+.os-step.done .os-step-circle {
+  background-color: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.os-step.done .os-step-label {
+  color: var(--text-secondary);
+}
+
+/* Active step */
+.os-step.active .os-step-circle {
+  background-color: transparent;
+  border-color: var(--accent);
+  color: var(--text-primary);
+  font-size: 1rem;
+  box-shadow: 0 0 0 3px rgba(233, 69, 96, 0.2);
+}
+
+.os-step.active .os-step-label {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+/* ── Cancelled state ──────────────────────────────── */
+
+.os-cancelled {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+  border-radius: var(--radius);
+  background-color: rgba(233, 69, 96, 0.1);
+  border: 1px solid rgba(233, 69, 96, 0.3);
+  color: var(--text-primary);
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.os-cancelled-icon {
+  font-size: 1.3rem;
+}
+
+/* ── Items list ───────────────────────────────────── */
 
 .os-items {
   list-style: none;

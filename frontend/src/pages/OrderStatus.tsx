@@ -3,13 +3,20 @@
  *
  * Маршрут: /order/:publicId
  *
- * STUB: базовый вариант — показывает public_id.
- * T-064 добавит WebSocket и прогресс-бар.
+ * Реализация:
+ *  - WebSocket /ws/orders/:publicId — live обновления статуса
+ *  - REST GET /api/orders/:publicId/status — метаданные заказа (стол, табаки)
+ *    + fallback-поллинг при недоступности WS
+ *  - Прогресс-степпер: pending → accepted → preparing → served
+ *  - Отдельное состояние для cancelled
  */
 
 import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import api from '../api/client';
+import { useOrderWebSocket } from '../hooks/useOrderWebSocket';
+
+/* ── Типы ───────────────────────────────────────────────────────────── */
 
 interface OrderStatusData {
   public_id: string;
@@ -21,33 +28,99 @@ interface OrderStatusData {
   updated_at: string;
 }
 
-const STATUS_LABELS: Record<string, string> = {
-  pending: '⏳ Ожидает подтверждения',
-  accepted: '✅ Принят',
-  preparing: '🔥 Готовится',
-  ready: '🎉 Готов!',
-  delivered: '🪁 Доставлен',
-  cancelled: '❌ Отменён',
+/* ── Конфиг статусов ─────────────────────────────────────────────────── */
+
+const STEP_ORDER = ['pending', 'accepted', 'preparing', 'served'] as const;
+
+const STEP_LABELS: Record<string, string> = {
+  pending: 'Ожидает',
+  accepted: 'Принят',
+  preparing: 'Готовится',
+  served: 'Подан',
 };
+
+const STEP_ICONS: Record<string, string> = {
+  pending: '⏳',
+  accepted: '✅',
+  preparing: '🔥',
+  served: '🪁',
+};
+
+const TERMINAL_STATUSES = new Set(['served', 'cancelled']);
+
+/* ── Компонент степпера ─────────────────────────────────────────────── */
+
+function StatusStepper({ status }: { status: string }) {
+  const currentIdx = STEP_ORDER.indexOf(status as (typeof STEP_ORDER)[number]);
+  // When status is 'served' (terminal positive), all steps are complete
+  const isTerminalPositive = status === 'served';
+
+  return (
+    <div className="os-stepper">
+      {STEP_ORDER.map((step, idx) => {
+        const isDone = isTerminalPositive
+          ? true // all steps done when served
+          : idx < currentIdx;
+        const isActive = !isTerminalPositive && idx === currentIdx;
+        const stepClass =
+          'os-step' + (isDone ? ' done' : isActive ? ' active' : ' upcoming');
+
+        return (
+          <div key={step} className="os-step-wrapper">
+            {idx > 0 && (
+              <div className={`os-connector${isDone || isActive ? ' filled' : ''}`} />
+            )}
+            <div className={stepClass}>
+              <div className="os-step-circle">
+                {isDone ? '✓' : isActive ? STEP_ICONS[step] : String(idx + 1)}
+              </div>
+              <span className="os-step-label">{STEP_LABELS[step]}</span>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+/* ── WS-индикатор соединения ────────────────────────────────────────── */
+
+function WsDot({ connected }: { connected: boolean }) {
+  return (
+    <span
+      className={`os-ws-dot${connected ? ' connected' : ''}`}
+      title={connected ? 'Live-обновления активны' : 'Переподключение...'}
+    />
+  );
+}
+
+/* ── Главный компонент ──────────────────────────────────────────────── */
 
 export default function OrderStatus() {
   const { publicId } = useParams<{ publicId: string }>();
+  const ws = useOrderWebSocket(publicId);
 
   const { data, isLoading, isError } = useQuery<OrderStatusData>({
     queryKey: ['order-status', publicId],
-    queryFn: () => api.get<OrderStatusData>(`/orders/${publicId}/status`).then((r) => r.data),
+    queryFn: () =>
+      api.get<OrderStatusData>(`/orders/${publicId}/status`).then((r) => r.data),
     enabled: !!publicId,
-    // Stop polling once order reaches a terminal state (delivered / cancelled).
-    // T-064 will replace this with WebSocket push.
+    // Поллинг — только если WS не подключён; останавливается при terminal-статусе
     refetchInterval: (query) => {
-      const s = query.state.data?.status;
-      if (s === 'delivered' || s === 'cancelled') return false;
+      if (ws.connected) return false;
+      const current = ws.status ?? query.state.data?.status;
+      if (current && TERMINAL_STATUSES.has(current)) return false;
       return 10_000;
     },
     retry: 1,
   });
 
-  if (isLoading) {
+  /* WS-статус приоритетнее REST */
+  const status = ws.status ?? data?.status ?? null;
+
+  /* ── Состояния загрузки ────────────────────────── */
+
+  if (isLoading && !status) {
     return (
       <div className="os-page">
         <div className="os-loading">Загрузка статуса...</div>
@@ -55,7 +128,7 @@ export default function OrderStatus() {
     );
   }
 
-  if (isError || !data) {
+  if ((isError && !data) || !publicId) {
     return (
       <div className="os-page">
         <div className="os-error">
@@ -66,28 +139,56 @@ export default function OrderStatus() {
     );
   }
 
+  /* ── Основной рендер ───────────────────────────── */
+
+  const isCancelled = status === 'cancelled';
+
   return (
     <div className="os-page">
       <div className="os-card">
-        <h2 className="os-title">Ваш заказ</h2>
-        <div className="os-status-badge">
-          {STATUS_LABELS[data.status] ?? data.status}
+        {/* Заголовок */}
+        <div className="os-header">
+          <h2 className="os-title">Ваш заказ</h2>
+          <WsDot connected={ws.connected} />
         </div>
-        <div className="os-meta">
-          <span>Стол №{data.table_number}</span>
-          <span>Крепость {data.strength}/10</span>
-        </div>
-        <ul className="os-items">
-          {data.items.map((item, i) => (
-            <li key={i} className="os-item">
-              {item.tobacco_name}
-              <span className="os-item-weight">{item.weight_grams} г</span>
-            </li>
-          ))}
-        </ul>
+
+        {/* Мета */}
+        {data && (
+          <div className="os-meta">
+            <span>Стол №{data.table_number}</span>
+            <span>Крепость {data.strength}/10</span>
+          </div>
+        )}
+
+        {/* Степпер или отменён */}
+        {isCancelled ? (
+          <div className="os-cancelled">
+            <span className="os-cancelled-icon">❌</span>
+            <span>Заказ отменён</span>
+          </div>
+        ) : (
+          status && <StatusStepper status={status} />
+        )}
+
+        {/* Список табаков */}
+        {data && data.items.length > 0 && (
+          <ul className="os-items">
+            {data.items.map((item, i) => (
+              <li key={`${item.tobacco_name}-${item.weight_grams}-${i}`} className="os-item">
+                {item.tobacco_name}
+                <span className="os-item-weight">{item.weight_grams}&nbsp;г</span>
+              </li>
+            ))}
+          </ul>
+        )}
+
+        {/* Подсказка */}
         <p className="os-hint">
-          Страница автоматически обновляется каждые 10 секунд.<br />
-          Живые обновления через WebSocket появятся в T-064.
+          {ws.connected
+            ? 'Live-обновления активны — страница обновится автоматически.'
+            : ws.hasError
+              ? 'Нет соединения — страница обновляется каждые 10 секунд.'
+              : 'Подключение...'}
         </p>
       </div>
     </div>
