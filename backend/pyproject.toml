@@ -1,0 +1,7 @@
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+filterwarnings = [
+    # slowapi GC artefact when async key_func coroutine is collected before being awaited
+    "ignore:coroutine '_order_rl_key' was never awaited:RuntimeWarning",
+]
