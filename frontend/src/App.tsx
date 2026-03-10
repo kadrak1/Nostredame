@@ -14,6 +14,7 @@ import AdminDashboard from './pages/admin/Dashboard';
 import FloorPlan from './pages/admin/FloorPlan';
 import Tobaccos from './pages/admin/Tobaccos';
 import AdminBookings from './pages/admin/Bookings';
+import QRCodes from './pages/admin/QRCodes';
 import './App.css';
 
 const queryClient = new QueryClient({
@@ -58,6 +59,7 @@ function App() {
               <Route path="floor-plan" element={<FloorPlan />} />
               <Route path="tobaccos" element={<Tobaccos />} />
               <Route path="bookings" element={<AdminBookings />} />
+              <Route path="qr-codes" element={<QRCodes />} />
             </Route>
           </Routes>
         </BrowserRouter>
