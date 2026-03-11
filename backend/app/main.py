@@ -13,7 +13,7 @@ from app.database import engine
 from app.limiter import limiter
 from app.logging_config import setup_logging
 from app.middleware.logging_middleware import RequestLoggingMiddleware
-from app.routers import auth, bookings, guest, health, master_recommendations, orders, tables, tobaccos, venue, ws
+from app.routers import auth, bookings, guest, health, master, master_recommendations, orders, tables, tobaccos, venue, ws
 
 # ---------------------------------------------------------------------------
 # Logging — configure structlog before any logger is used
@@ -85,5 +85,6 @@ app.include_router(tobaccos.router, prefix="/api")
 app.include_router(bookings.router, prefix="/api")
 app.include_router(guest.router, prefix="/api")
 app.include_router(orders.router, prefix="/api")
+app.include_router(master.router, prefix="/api")
 app.include_router(master_recommendations.router, prefix="/api")
 app.include_router(ws.router)  # WebSocket routes — no /api prefix
