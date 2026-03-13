@@ -1508,6 +1508,13 @@ textarea:focus {
   color: var(--text-muted);
 }
 
+.hb-rec-flavors {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin-top: 0.15rem;
+}
+
 .hb-rec-apply-btn {
   padding: 7px 14px;
   font-size: 0.82rem;
