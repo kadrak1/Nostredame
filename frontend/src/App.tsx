@@ -1,6 +1,6 @@
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { AuthProvider, PrivateRoute } from './auth';
+import { AuthProvider, MasterRoute, PrivateRoute } from './auth';
 import { GuestAuthProvider } from './guest-auth';
 import Home from './pages/Home';
 import Booking from './pages/Booking';
@@ -15,7 +15,13 @@ import FloorPlan from './pages/admin/FloorPlan';
 import Tobaccos from './pages/admin/Tobaccos';
 import AdminBookings from './pages/admin/Bookings';
 import QRCodes from './pages/admin/QRCodes';
+import MasterLogin from './pages/master/Login';
+import MasterLayout from './layouts/MasterLayout';
+import OrderQueue from './pages/master/OrderQueue';
+import OrderHistory from './pages/master/OrderHistory';
+import MasterRecommendationsPage from './pages/master/Recommendations';
 import './App.css';
+import './master.css';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -60,6 +66,24 @@ function App() {
               <Route path="tobaccos" element={<Tobaccos />} />
               <Route path="bookings" element={<AdminBookings />} />
               <Route path="qr-codes" element={<QRCodes />} />
+            </Route>
+
+            {/* Master — login is public */}
+            <Route path="/master/login" element={<MasterLogin />} />
+
+            {/* Master — protected with role guard */}
+            <Route
+              path="/master"
+              element={
+                <MasterRoute>
+                  <MasterLayout />
+                </MasterRoute>
+              }
+            >
+              <Route index element={<OrderQueue />} />
+              <Route path="orders" element={<OrderQueue />} />
+              <Route path="history" element={<OrderHistory />} />
+              <Route path="recommendations" element={<MasterRecommendationsPage />} />
             </Route>
           </Routes>
         </BrowserRouter>

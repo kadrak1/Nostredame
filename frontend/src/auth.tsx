@@ -12,10 +12,18 @@ import {
 import { Navigate, useLocation } from 'react-router-dom';
 import api from './api/client';
 
+export interface UserInfo {
+  id: number;
+  venue_id: number;
+  role: string;
+  display_name: string;
+}
+
 interface AuthState {
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: () => void;
+  user: UserInfo | null;
+  login: () => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -24,6 +32,7 @@ const AuthContext = createContext<AuthState | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [user, setUser] = useState<UserInfo | null>(null);
   const logoutRef = useRef<(() => Promise<void>) | undefined>(undefined);
 
   const logout = useCallback(async () => {
@@ -33,6 +42,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // ignore — cookies may already be gone
     }
     setIsAuthenticated(false);
+    setUser(null);
   }, []);
 
   // Keep ref in sync for use in interceptor (avoids stale closure)
@@ -44,9 +54,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Concurrent 401s are queued — only one refresh request is made.
   useEffect(() => {
     api
-      .get('/auth/me')
-      .then(() => setIsAuthenticated(true))
-      .catch(() => setIsAuthenticated(false))
+      .get<UserInfo>('/auth/me')
+      .then((r) => { setIsAuthenticated(true); setUser(r.data); })
+      .catch(() => { setIsAuthenticated(false); setUser(null); })
       .finally(() => setIsLoading(false));
 
     let isRefreshing = false;
@@ -100,13 +110,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  const login = useCallback(() => {
-    setIsAuthenticated(true);
+  const login = useCallback(async () => {
+    try {
+      const r = await api.get<UserInfo>('/auth/me');
+      setUser(r.data);
+      setIsAuthenticated(true);
+    } catch {
+      setIsAuthenticated(false);
+      setUser(null);
+    }
   }, []);
 
   const value = useMemo(
-    () => ({ isAuthenticated, isLoading, login, logout }),
-    [isAuthenticated, isLoading, login, logout],
+    () => ({ isAuthenticated, isLoading, user, login, logout }),
+    [isAuthenticated, isLoading, user, login, logout],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
@@ -128,6 +145,23 @@ export function PrivateRoute({ children }: { children: ReactNode }) {
 
   if (!isAuthenticated) {
     return <Navigate to="/admin/login" state={{ from: location }} replace />;
+  }
+
+  return <>{children}</>;
+}
+
+const MASTER_ROLES = new Set(['hookah_master', 'admin', 'owner']);
+
+export function MasterRoute({ children }: { children: ReactNode }) {
+  const { isAuthenticated, isLoading, user } = useAuth();
+  const location = useLocation();
+
+  if (isLoading) {
+    return <div className="loading">Загрузка...</div>;
+  }
+
+  if (!isAuthenticated || !user || !MASTER_ROLES.has(user.role)) {
+    return <Navigate to="/master/login" state={{ from: location }} replace />;
   }
 
   return <>{children}</>;
