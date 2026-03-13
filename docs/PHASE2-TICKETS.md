@@ -33,14 +33,14 @@
 | T-081 | Guest auth API: POST /api/auth/guest + JWT + cookies | backend | M | ⬜ Не начат | [T-080](features/PHASE-2-T080-guest-auth.md) |
 | T-082 | Guest profile API: GET/PUT /api/guest/me + dependencies | backend | S | ⬜ Не начат | [T-080](features/PHASE-2-T080-guest-auth.md) |
 | T-083 | PhoneLogin компонент + GuestAuthProvider + интеграция Booking | frontend | M | ⬜ Не начат | [T-080](features/PHASE-2-T080-guest-auth.md) |
-| T-090 | Master API: GET /api/master/orders + PUT status + зависимость hookah_master | backend | M | ⬜ Не начат | [T-090](features/PHASE-2-T090-hookah-master-panel.md) |
-| T-091 | WS /ws/master/orders + ws_manager расширение | backend | M | ⬜ Не начат | [T-090](features/PHASE-2-T090-hookah-master-panel.md) |
-| T-092 | MasterLayout + маршруты + auth guard | frontend | S | ⬜ Не начат | [T-090](features/PHASE-2-T090-hookah-master-panel.md) |
-| T-093 | OrderQueue страница + OrderCard компонент + WebSocket | frontend | L | ⬜ Не начат | [T-090](features/PHASE-2-T090-hookah-master-panel.md) |
-| T-094 | OrderHistory страница + звуковые уведомления (useOrderNotification) | frontend | M | ⬜ Не начат | [T-090](features/PHASE-2-T090-hookah-master-panel.md) |
-| T-095 | Recommendations страница + RecommendationForm в панели кальянщика | frontend | M | ⬜ Не начат | [T-090](features/PHASE-2-T090-hookah-master-panel.md) |
+| T-090 | Master API: GET /api/master/orders + PUT status + зависимость hookah_master | backend | M | ✅ Готово | [T-090](features/PHASE-2-T090-hookah-master-panel.md) |
+| T-091 | WS /ws/master/orders + ws_manager расширение | backend | M | ✅ Готово | [T-090](features/PHASE-2-T090-hookah-master-panel.md) |
+| T-092 | MasterLayout + маршруты + auth guard | frontend | S | ✅ Готово | [T-090](features/PHASE-2-T090-hookah-master-panel.md) |
+| T-093 | OrderQueue страница + OrderCard компонент + WebSocket | frontend | L | ✅ Готово | [T-090](features/PHASE-2-T090-hookah-master-panel.md) |
+| T-094 | OrderHistory страница + звуковые уведомления (useOrderNotification) | frontend | M | ✅ Готово | [T-090](features/PHASE-2-T090-hookah-master-panel.md) |
+| T-095 | Recommendations страница + RecommendationForm в панели кальянщика | frontend | M | ✅ Готово | [T-090](features/PHASE-2-T090-hookah-master-panel.md) |
 
-**Прогресс**: 0 / 31 тикета завершено (0%)
+**Прогресс**: 6 / 31 тикета завершено (19%)
 
 ---
 
@@ -283,7 +283,7 @@ Telegram-бот с ConversationHandler для бронирования и зак
 
 Веб-панель для роли `hookah_master` — очередь заказов в реальном времени, управление статусами через кнопки, история смены.
 
-### T-090: ⬜ Master API: GET /api/master/orders + PUT status
+### T-090: ✅ Master API: GET /api/master/orders + PUT status
 **Тип**: backend · **Оценка**: M (~4 ч) · **Зависимости**: T-050, T-060
 - `GET /api/master/orders` — активные заказы заведения (status != served/cancelled), только `hookah_master`
 - `PUT /api/master/orders/{id}/accept` → `OrderStatus.accepted`
@@ -292,35 +292,35 @@ Telegram-бот с ConversationHandler для бронирования и зак
 - Dependency: `get_current_user` с проверкой роли `hookah_master | admin | owner`
 - **AC**: Кальянщик меняет статус заказа, изменение сохраняется
 
-### T-091: ⬜ WS /ws/master/orders + ws_manager расширение
+### T-091: ✅ WS /ws/master/orders + ws_manager расширение
 **Тип**: backend · **Оценка**: M (~4 ч) · **Зависимости**: T-062, T-090
 - `WS /ws/master/orders` — подписка кальянщика на новые заказы заведения (venue_id из JWT)
 - Расширить `ws_manager.py` — группы подписок по `venue_id`
 - Push событий: `order.new`, `order.updated` при смене статуса
 - **AC**: При создании нового заказа кальянщик получает WS-уведомление без перезагрузки
 
-### T-092: ⬜ MasterLayout + маршруты + auth guard
+### T-092: ✅ MasterLayout + маршруты + auth guard
 **Тип**: frontend · **Оценка**: S (~2 ч) · **Зависимости**: T-011
 - `MasterLayout.tsx` — отдельный layout для панели кальянщика
 - Маршруты `/master/*` в React Router
 - Auth guard: только пользователи с ролью `hookah_master | admin | owner`
 - **AC**: Попытка открыть `/master` без роли hookah_master → редирект на логин
 
-### T-093: ⬜ OrderQueue страница + OrderCard + WebSocket
+### T-093: ✅ OrderQueue страница + OrderCard + WebSocket
 **Тип**: frontend · **Оценка**: L (~8 ч) · **Зависимости**: T-091, T-092
 - `OrderQueue.tsx` — страница `/master/orders`, три колонки: Новые / В работе / Готово
 - `OrderCard.tsx` — карточка заказа: стол, гость, состав кальяна, кнопки смены статуса
 - WebSocket подключение через `useWebSocket` hook
 - **AC**: Карточки появляются в реальном времени, кнопки меняют статус
 
-### T-094: ⬜ OrderHistory страница + звуковые уведомления
+### T-094: ✅ OrderHistory страница + звуковые уведомления
 **Тип**: frontend · **Оценка**: M (~4 ч) · **Зависимости**: T-092
 - `OrderHistory.tsx` — страница `/master/history`, фильтр по дате
 - `useOrderNotification` hook — звуковой сигнал при поступлении нового заказа (Web Audio API)
 - Настройка: включить/отключить звук
 - **AC**: При новом заказе звучит сигнал (если включён), история доступна за любую дату
 
-### T-095: ⬜ Recommendations страница + RecommendationForm в панели кальянщика
+### T-095: ✅ Recommendations страница + RecommendationForm в панели кальянщика
 **Тип**: frontend · **Оценка**: M (~5 ч) · **Зависимости**: T-055, T-092
 - `Recommendations.tsx` — страница `/master/recommendations`, список карточек рекомендаций (имя, strength_level, состав)
 - `RecommendationForm.tsx` — форма создания/редактирования рекомендации (имя, уровень крепости, список табаков с весом, переключатель is_active)
