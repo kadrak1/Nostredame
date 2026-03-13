@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../auth';
 import api from '../../api/client';
 
-export default function AdminLogin() {
+export default function MasterLogin() {
   const [login, setLogin] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -13,7 +13,7 @@ export default function AdminLogin() {
   const auth = useAuth();
 
   const rawFrom = (location.state as { from?: { pathname: string } })?.from?.pathname;
-  const from = rawFrom?.startsWith('/') && !rawFrom.startsWith('//') ? rawFrom : '/admin';
+  const from = rawFrom?.startsWith('/') && !rawFrom.startsWith('//') ? rawFrom : '/master/orders';
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -22,13 +22,12 @@ export default function AdminLogin() {
 
     try {
       await api.post('/auth/login', { login, password });
-      // Backend sets httpOnly cookies — fetch user and mark as authenticated
       await auth.login();
       navigate(from, { replace: true });
     } catch (err: unknown) {
       const msg =
-        (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail
-        || 'Неверный логин или пароль';
+        (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail ||
+        'Неверный логин или пароль';
       setError(msg);
     } finally {
       setLoading(false);
@@ -38,7 +37,7 @@ export default function AdminLogin() {
   return (
     <div className="login-page">
       <form onSubmit={handleSubmit} className="login-form">
-        <h1>Вход в панель управления</h1>
+        <h1>Вход для кальянщика</h1>
 
         {error && <div className="error">{error}</div>}
 
