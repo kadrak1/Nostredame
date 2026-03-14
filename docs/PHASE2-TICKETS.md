@@ -4,22 +4,22 @@
 
 ---
 
-## Статус прогресса (обновлено: 2026-03-07)
+## Статус прогресса (обновлено: 2026-03-13)
 
 | Тикет | Название | Тип | Оценка | Статус | Спека |
 |-------|----------|-----|--------|--------|-------|
-| T-050 | Enum OrderSource + поле source в HookahOrder + миграция | backend | S | ⬜ Не начат | [T-050](features/PHASE-2-T050-hookah-preorder.md) |
-| T-051 | Pydantic-схемы заказа (OrderCreate, OrderPublic, OrderItem) | backend | S | ⬜ Не начат | [T-050](features/PHASE-2-T050-hookah-preorder.md) |
-| T-052 | API: POST/GET /api/bookings/{id}/orders + фильтры tobaccos | backend | M | ⬜ Не начат | [T-050](features/PHASE-2-T050-hookah-preorder.md) |
-| T-053 | Компонент HookahBuilder (StrengthSelector 1-10, TobaccoSelector, MasterRecommendations, OrderPreview) | frontend | L | ⬜ Не начат | [T-050](features/PHASE-2-T050-hookah-preorder.md) |
-| T-054 | Интеграция HookahBuilder в Booking.tsx + экран успеха | frontend | M | ⬜ Не начат | [T-050](features/PHASE-2-T050-hookah-preorder.md) |
-| T-055 | MasterRecommendation модель + миграция + CRUD API + публичный GET | backend | M | ⬜ Не начат | [T-050](features/PHASE-2-T050-hookah-preorder.md) |
-| T-060 | QR-генератор: сервис + API endpoint + массовая генерация | backend | M | ⬜ Не начат | [T-060](features/PHASE-2-T060-qr-table-ordering.md) |
-| T-061 | Orders API: POST /api/orders + public_id + rate limit | backend | M | ⬜ Не начат | [T-060](features/PHASE-2-T060-qr-table-ordering.md) |
-| T-062 | WebSocket manager + WS /ws/orders/{public_id} | backend | L | ⬜ Не начат | [T-060](features/PHASE-2-T060-qr-table-ordering.md) |
-| T-063 | TableLanding + TableOrder страницы (с HookahBuilder) | frontend | M | ⬜ Не начат | [T-060](features/PHASE-2-T060-qr-table-ordering.md) |
-| T-064 | OrderStatus страница (прогресс-бар, WebSocket) | frontend | M | ⬜ Не начат | [T-060](features/PHASE-2-T060-qr-table-ordering.md) |
-| T-065 | Админ QR-страница + маршруты | frontend | S | ⬜ Не начат | [T-060](features/PHASE-2-T060-qr-table-ordering.md) |
+| T-050 | Enum OrderSource + поле source в HookahOrder + миграция | backend | S | ✅ Готово | [T-050](features/PHASE-2-T050-hookah-preorder.md) |
+| T-051 | Pydantic-схемы заказа (OrderCreate, OrderPublic, OrderItem) | backend | S | ✅ Готово | [T-050](features/PHASE-2-T050-hookah-preorder.md) |
+| T-052 | API: POST/GET /api/bookings/{id}/orders + фильтры tobaccos | backend | M | ✅ Готово | [T-050](features/PHASE-2-T050-hookah-preorder.md) |
+| T-053 | Компонент HookahBuilder (StrengthSelector 1-10, TobaccoSelector, MasterRecommendations, OrderPreview) | frontend | L | ✅ Готово | [T-050](features/PHASE-2-T050-hookah-preorder.md) |
+| T-054 | Интеграция HookahBuilder в Booking.tsx + экран успеха | frontend | M | ✅ Готово | [T-050](features/PHASE-2-T050-hookah-preorder.md) |
+| T-055 | MasterRecommendation модель + миграция + CRUD API + публичный GET | backend | M | ✅ Готово | [T-050](features/PHASE-2-T050-hookah-preorder.md) |
+| T-060 | QR-генератор: сервис + API endpoint + массовая генерация | backend | M | ✅ Готово | [T-060](features/PHASE-2-T060-qr-table-ordering.md) |
+| T-061 | Orders API: POST /api/orders + public_id + rate limit | backend | M | ✅ Готово | [T-060](features/PHASE-2-T060-qr-table-ordering.md) |
+| T-062 | WebSocket manager + WS /ws/orders/{public_id} | backend | L | ✅ Готово | [T-060](features/PHASE-2-T060-qr-table-ordering.md) |
+| T-063 | TableLanding + TableOrder страницы (с HookahBuilder) | frontend | M | ✅ Готово | [T-060](features/PHASE-2-T060-qr-table-ordering.md) |
+| T-064 | OrderStatus страница (прогресс-бар, WebSocket) | frontend | M | ✅ Готово | [T-060](features/PHASE-2-T060-qr-table-ordering.md) |
+| T-065 | Админ QR-страница + маршруты | frontend | S | ✅ Готово | [T-060](features/PHASE-2-T060-qr-table-ordering.md) |
 | T-070 | Bot skeleton: main.py, api_client.py, messages.py, docker-compose сервис | backend | M | ⬜ Не начат | [T-070](features/PHASE-2-T070-telegram-bot.md) |
 | T-071 | /start handler + главное меню | backend | S | ⬜ Не начат | [T-070](features/PHASE-2-T070-telegram-bot.md) |
 | T-072 | Booking ConversationHandler (7 шагов) + keyboards | backend | L | ⬜ Не начат | [T-070](features/PHASE-2-T070-telegram-bot.md) |
@@ -29,10 +29,10 @@
 | T-076 | Интеграция notifications в booking/order status changes | backend | M | ⬜ Не начат | [T-070](features/PHASE-2-T070-telegram-bot.md) |
 | T-077 | Guest model: telegram_username, индекс telegram_id | backend | S | ⬜ Не начат | [T-070](features/PHASE-2-T070-telegram-bot.md) |
 | T-078 | E2E тесты бота (mock API + mock Telegram) | backend | M | ⬜ Не начат | [T-070](features/PHASE-2-T070-telegram-bot.md) |
-| T-080 | Расширение Guest модели + миграция (last_login_at, login_count) | backend | S | ⬜ Не начат | [T-080](features/PHASE-2-T080-guest-auth.md) |
-| T-081 | Guest auth API: POST /api/auth/guest + JWT + cookies | backend | M | ⬜ Не начат | [T-080](features/PHASE-2-T080-guest-auth.md) |
-| T-082 | Guest profile API: GET/PUT /api/guest/me + dependencies | backend | S | ⬜ Не начат | [T-080](features/PHASE-2-T080-guest-auth.md) |
-| T-083 | PhoneLogin компонент + GuestAuthProvider + интеграция Booking | frontend | M | ⬜ Не начат | [T-080](features/PHASE-2-T080-guest-auth.md) |
+| T-080 | Расширение Guest модели + миграция (last_login_at, login_count) | backend | S | ✅ Готово | [T-080](features/PHASE-2-T080-guest-auth.md) |
+| T-081 | Guest auth API: POST /api/auth/guest + JWT + cookies | backend | M | ✅ Готово | [T-080](features/PHASE-2-T080-guest-auth.md) |
+| T-082 | Guest profile API: GET/PUT /api/guest/me + dependencies | backend | S | ✅ Готово | [T-080](features/PHASE-2-T080-guest-auth.md) |
+| T-083 | PhoneLogin компонент + GuestAuthProvider + интеграция Booking | frontend | M | ✅ Готово | [T-080](features/PHASE-2-T080-guest-auth.md) |
 | T-090 | Master API: GET /api/master/orders + PUT status + зависимость hookah_master | backend | M | ✅ Готово | [T-090](features/PHASE-2-T090-hookah-master-panel.md) |
 | T-091 | WS /ws/master/orders + ws_manager расширение | backend | M | ✅ Готово | [T-090](features/PHASE-2-T090-hookah-master-panel.md) |
 | T-092 | MasterLayout + маршруты + auth guard | frontend | S | ✅ Готово | [T-090](features/PHASE-2-T090-hookah-master-panel.md) |
@@ -40,7 +40,7 @@
 | T-094 | OrderHistory страница + звуковые уведомления (useOrderNotification) | frontend | M | ✅ Готово | [T-090](features/PHASE-2-T090-hookah-master-panel.md) |
 | T-095 | Recommendations страница + RecommendationForm в панели кальянщика | frontend | M | ✅ Готово | [T-090](features/PHASE-2-T090-hookah-master-panel.md) |
 
-**Прогресс**: 6 / 31 тикета завершено (19%)
+**Прогресс**: 22 / 31 тикета завершено (71%) · Осталось: Telegram-бот (T-070–T-078)
 
 ---
 
@@ -52,14 +52,14 @@
 
 Гость в процессе бронирования стола может дополнительно сделать предзаказ кальяна: выбрать крепость, табаки из каталога и добавить комментарий. Менеджер видит предзаказ вместе с бронированием.
 
-### T-050: ⬜ Enum OrderSource + поле source в HookahOrder + миграция
+### T-050: ✅ Enum OrderSource + поле source в HookahOrder + миграция
 **Тип**: backend · **Оценка**: S (~2 ч) · **Зависимости**: T-030
 - Добавить enum `OrderSource` (`booking_preorder`, `qr_table`, `telegram`) в `models/enums.py`
 - Добавить поле `source: Mapped[OrderSource]` в модель `HookahOrder`
 - Написать и применить Alembic миграцию
 - **AC**: `source` присутствует в БД, `alembic upgrade head` проходит без ошибок
 
-### T-051: ⬜ Pydantic-схемы заказа
+### T-051: ✅ Pydantic-схемы заказа
 **Тип**: backend · **Оценка**: S (~2 ч) · **Зависимости**: T-050
 - `OrderItemCreate`, `OrderItemPublic` — позиция заказа (tobacco_id, weight_grams, comment)
 - `OrderCreate` — создание заказа (booking_id?, table_id?, items[], guest_note, source)
@@ -67,7 +67,7 @@
 - `OrderAdmin` — ответ для админа (расширенный, с guest info)
 - **AC**: Схемы валидируют входные данные, некорректные tobacco_id отклоняются
 
-### T-052: ⬜ API предзаказа + фильтры табаков
+### T-052: ✅ API предзаказа + фильтры табаков
 **Тип**: backend · **Оценка**: M (~4 ч) · **Зависимости**: T-051, T-031
 - `POST /api/bookings/{id}/orders` — создать предзаказ при бронировании
 - `GET /api/bookings/{id}/orders` — список предзаказов по брони
@@ -75,7 +75,7 @@
 - Проверка: booking принадлежит текущему гостю или публичный (guest_phone)
 - **AC**: Предзаказ создаётся и привязывается к брони, появляется в ответе `/api/admin/bookings`
 
-### T-053: ⬜ Компонент HookahBuilder
+### T-053: ✅ Компонент HookahBuilder
 **Тип**: frontend · **Оценка**: L (~8 ч) · **Зависимости**: T-052, T-055
 - `StrengthSelector.tsx` — переключатель крепости: «Лёгкий» (1-4) / «Средний» (5-7) / «Крепкий» (8-10), маппинг на шкалу 1-10
 - `MasterRecommendations.tsx` — блок «Рекомендует кальянщик»: активные рекомендации для выбранного strength_level (из GET /api/master/recommendations), кнопка «Выбрать этот микс» предзаполняет TobaccoSelector
@@ -86,14 +86,14 @@
 - Слот для `RepeatOrderButton` (авторизованный гость — T-100)
 - **AC**: Гость может выбрать крепость, просмотреть рекомендации кальянщика, выбрать 1-3 табака (вес по умолчанию 20г), отправить заказ
 
-### T-054: ⬜ Интеграция HookahBuilder в Booking.tsx
+### T-054: ✅ Интеграция HookahBuilder в Booking.tsx
 **Тип**: frontend · **Оценка**: M (~4 ч) · **Зависимости**: T-053
 - После успешного бронирования — опциональный Шаг 6 "Добавить кальян"
 - Кнопка "Пропустить" возвращает на экран подтверждения
 - Экран успеха обновить: показывать детали предзаказа если он был сделан
 - **AC**: Флоу бронирования с кальяном работает сквозь 6 шагов
 
-### T-055: ⬜ MasterRecommendation модель + CRUD API + публичный GET
+### T-055: ✅ MasterRecommendation модель + CRUD API + публичный GET
 **Тип**: backend · **Оценка**: M (~5 ч) · **Зависимости**: T-031, T-004
 - Модель `MasterRecommendation` в `backend/app/models/master_recommendation.py`:
   - Поля: `id`, `venue_id` (FK venues), `name` (String(100)), `strength_level` (String(10): `"light"` | `"medium"` | `"strong"`), `items` (JSON: `[{tobacco_id, weight_grams}]`), `is_active` (bool, default True), `created_by` (FK users), `created_at`
@@ -113,7 +113,7 @@
 
 Гость сканирует QR-код на столе → видит лендинг с выбором канала (веб/Telegram) → собирает заказ через HookahBuilder → отслеживает статус в реальном времени через WebSocket.
 
-### T-060: ⬜ QR-генератор: сервис + API endpoint
+### T-060: ✅ QR-генератор: сервис + API endpoint
 **Тип**: backend · **Оценка**: M (~4 ч) · **Зависимости**: T-013
 - Сервис `services/qr.py` — генерация QR PNG через `qrcode` (pil)
 - `GET /api/tables/{id}/qr` — скачать PNG (только admin/owner)
@@ -122,7 +122,7 @@
 - `public_table_token` — UUIDv4, не раскрывающий числовой ID стола
 - **AC**: QR-PNG скачивается, URL в нём ведёт на `/table/:token`
 
-### T-061: ⬜ Orders API: POST /api/orders + public_id + rate limit
+### T-061: ✅ Orders API: POST /api/orders + public_id + rate limit
 **Тип**: backend · **Оценка**: M (~4 ч) · **Зависимости**: T-050, T-051
 - `POST /api/orders` — создать заказ с привязкой к столу (по public_table_token)
 - `GET /api/orders/{public_id}/status` — статус заказа (публичный)
@@ -130,7 +130,7 @@
 - Rate limit: 3 заказа/мин на IP
 - **AC**: Заказ создаётся, public_id возвращается, статус доступен без авторизации
 
-### T-062: ⬜ WebSocket manager + WS /ws/orders/{public_id}
+### T-062: ✅ WebSocket manager + WS /ws/orders/{public_id}
 **Тип**: backend · **Оценка**: L (~8 ч) · **Зависимости**: T-061
 - `services/ws_manager.py` — ConnectionManager (subscribe, broadcast, disconnect)
 - `WS /ws/orders/{public_id}` — подписка гостя на обновления заказа
@@ -138,21 +138,21 @@
 - Push при смене `OrderStatus` из orders.py
 - **AC**: Браузер получает обновление через WS при смене статуса кальянщиком
 
-### T-063: ⬜ TableLanding + TableOrder страницы
+### T-063: ✅ TableLanding + TableOrder страницы
 **Тип**: frontend · **Оценка**: M (~5 ч) · **Зависимости**: T-053, T-061
 - `TableLanding.tsx` — route `/table/:token`: информация о столе, кнопки "Заказать в браузере" / "Открыть в Telegram"
 - `TableOrder.tsx` — встраивает `HookahBuilder`, отправка заказа
 - Слот для `RepeatOrderButton` (T-100)
 - **AC**: Сканирование QR открывает лендинг, заказ создаётся
 
-### T-064: ⬜ OrderStatus страница
+### T-064: ✅ OrderStatus страница
 **Тип**: frontend · **Оценка**: M (~4 ч) · **Зависимости**: T-062
 - `OrderStatus.tsx` — route `/order/:public_id`
 - Прогресс-бар: pending → accepted → preparing → served
 - Обновление через WebSocket (fallback: polling каждые 5 с)
 - **AC**: Статус обновляется в реальном времени без перезагрузки страницы
 
-### T-065: ⬜ Админ QR-страница
+### T-065: ✅ Админ QR-страница
 **Тип**: frontend · **Оценка**: S (~3 ч) · **Зависимости**: T-060
 - Страница `/admin/qr` — таблица столов, кнопка "Скачать QR" для каждого
 - Кнопка "Скачать все (ZIP)"
@@ -243,14 +243,14 @@ Telegram-бот с ConversationHandler для бронирования и зак
 
 Гость вводит номер телефона → система ищет или создаёт Guest по phone_hash → выдаёт гостевой JWT с ограниченными правами. Без SMS-OTP — максимально простой вход.
 
-### T-080: ⬜ Расширение модели Guest + миграция
+### T-080: ✅ Расширение модели Guest + миграция
 **Тип**: backend · **Оценка**: S (~2 ч) · **Зависимости**: T-030
 - Добавить поля `last_login_at: Mapped[datetime | None]`, `login_count: Mapped[int]` (default 0)
 - Добавить `telegram_blocked: Mapped[bool]` (default False) — флаг блокировки от T-077
 - Написать и применить миграцию Alembic
 - **AC**: Миграция проходит, поля доступны
 
-### T-081: ⬜ Guest auth API: POST /api/auth/guest
+### T-081: ✅ Guest auth API: POST /api/auth/guest
 **Тип**: backend · **Оценка**: M (~5 ч) · **Зависимости**: T-080, T-004
 - `POST /api/auth/guest` — принимает `{ guest_phone }`, возвращает гостевой JWT + httpOnly cookie
 - Логика: phone → phone_hash → поиск Guest → создать если не найден → обновить last_login_at
@@ -258,14 +258,14 @@ Telegram-бот с ConversationHandler для бронирования и зак
 - Rate limit: 5 попыток/мин с одного IP
 - **AC**: POST с телефоном возвращает JWT, повторный вход находит того же Guest
 
-### T-082: ⬜ Guest profile API: GET/PUT /api/guest/me
+### T-082: ✅ Guest profile API: GET/PUT /api/guest/me
 **Тип**: backend · **Оценка**: S (~3 ч) · **Зависимости**: T-081
 - Dependency `get_current_guest()` в `dependencies.py` — проверяет гостевой JWT
 - `GET /api/guest/me` — профиль гостя (без телефона в открытом виде)
 - `PUT /api/guest/me` — обновление имени гостя
 - **AC**: Авторизованный гость получает и обновляет профиль
 
-### T-083: ⬜ PhoneLogin компонент + GuestAuthProvider
+### T-083: ✅ PhoneLogin компонент + GuestAuthProvider
 **Тип**: frontend · **Оценка**: M (~5 ч) · **Зависимости**: T-081
 - `PhoneLogin.tsx` — одно поле ввода телефона + кнопка "Войти"
 - `GuestAuthProvider.tsx` — React Context для гостевой сессии (хранение токена, текущий guest)
