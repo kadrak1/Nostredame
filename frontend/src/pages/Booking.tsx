@@ -93,6 +93,8 @@ const COLORS = {
   tableSelectedStroke: '#d63b54',
   tableBusy: '#3a3a4a',
   tableBusyStroke: '#4a4a5a',
+  tableTooSmall: '#4a3a10',
+  tableTooSmallStroke: '#6a5520',
   text: '#FFFFFF',
   textMuted: 'rgba(255,255,255,0.5)',
 };
@@ -308,6 +310,8 @@ function Step2({
         <span>Выбран</span>
         <span className="bk-legend-dot" style={{ background: COLORS.tableBusy }} />
         <span>Занят</span>
+        <span className="bk-legend-dot" style={{ background: COLORS.tableTooSmall }} />
+        <span>Мало мест</span>
       </div>
 
       {isLoading && <p className="info-muted">Загрузка плана зала...</p>}
@@ -344,15 +348,20 @@ function Step2({
               {allTables.map((table) => {
                 const available = availableIds.has(table.id);
                 const selected = table.id === selectedTableId;
+                const tooSmall = !available && table.capacity < step1.guest_count;
                 const fill = selected
                   ? COLORS.tableSelected
                   : available
                   ? COLORS.tableAvailable
+                  : tooSmall
+                  ? COLORS.tableTooSmall
                   : COLORS.tableBusy;
                 const stroke = selected
                   ? COLORS.tableSelectedStroke
                   : available
                   ? COLORS.tableAvailableStroke
+                  : tooSmall
+                  ? COLORS.tableTooSmallStroke
                   : COLORS.tableBusyStroke;
 
                 const clickProps = available
