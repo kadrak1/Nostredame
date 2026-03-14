@@ -135,15 +135,17 @@ export function useAuth(): AuthState {
   return ctx;
 }
 
+const ADMIN_ROLES = new Set(['owner', 'admin']);
+
 export function PrivateRoute({ children }: { children: ReactNode }) {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, user } = useAuth();
   const location = useLocation();
 
   if (isLoading) {
     return <div className="loading">Загрузка...</div>;
   }
 
-  if (!isAuthenticated) {
+  if (!isAuthenticated || !user || !ADMIN_ROLES.has(user.role)) {
     return <Navigate to="/admin/login" state={{ from: location }} replace />;
   }
 
