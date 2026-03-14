@@ -27,6 +27,14 @@ interface OrderItem {
   weight_grams: number;
 }
 
+function strengthToNumber(level: StrengthLevel): number {
+  switch (level) {
+    case 'light':  return 3;
+    case 'medium': return 6;
+    case 'strong': return 9;
+  }
+}
+
 interface HookahBuilderProps {
   bookingId: number;
   guestPhone: string;
@@ -85,7 +93,7 @@ export default function HookahBuilder({
   const selectedItems = Array.from(selected.values());
 
   const createMutation = useMutation({
-    mutationFn: (payload: { guest_phone: string; items: OrderItem[] }) =>
+    mutationFn: (payload: { guest_phone: string; strength: number; items: OrderItem[] }) =>
       api.post(`/bookings/${bookingId}/orders`, payload).then((r) => r.data),
     onSuccess: () => {
       onComplete();
@@ -99,10 +107,11 @@ export default function HookahBuilder({
   });
 
   const handleSubmit = () => {
-    if (selectedItems.length === 0) return;
+    if (!strength || selectedItems.length === 0) return;
     setSubmitError('');
     createMutation.mutate({
       guest_phone: guestPhone,
+      strength: strengthToNumber(strength),
       items: selectedItems.map((i) => ({
         tobacco_id: i.tobacco.id,
         weight_grams: DEFAULT_WEIGHT,
@@ -152,7 +161,7 @@ export default function HookahBuilder({
           type="button"
           className="btn btn-primary hb-submit-btn"
           onClick={handleSubmit}
-          disabled={selectedItems.length === 0 || createMutation.isPending}
+          disabled={!strength || selectedItems.length === 0 || createMutation.isPending}
         >
           {createMutation.isPending ? 'Отправляем...' : 'Заказать кальян'}
         </button>
